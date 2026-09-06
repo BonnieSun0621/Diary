@@ -93,9 +93,9 @@ async function renderStats(root) {
 
   await paint();
 }
-function mkChartCard(title, cls, h) {
+function mkChartCard(title, h) {
   const c = document.createElement('div');
   c.className = 'card';
-  c.innerHTML = `<h2>${title}</h2><div class="${cls} ${h}"></div>`;
+  c.innerHTML = `<h2>${title}</h2><div class="chart ${h}"></div>`;
   return c;
 }

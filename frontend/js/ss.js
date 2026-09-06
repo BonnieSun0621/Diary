@@ -9,7 +9,8 @@ function SearchSelect({ level, placeholder, getOptions, onPick, getCreateParent 
   const input = box.querySelector('input'), pop = box.querySelector('.picker-pop');
   let items = [], picked = null;
 
-  const setValue = v => { picked = v; if (v != null) { const it = items.find(x => x.id === v); input.value = it ? it.label : ''; } else input.value = ''; };
+  const display = it => (it ? (it.icon ? it.icon + ' ' + it.text : it.text) : '');
+  const setValue = v => { picked = v; const it = items.find(x => x.id === v); input.value = display(it); };
   const close = () => { pop.hidden = true; };
   const open = () => {
     items = getOptions() || [];
@@ -65,7 +66,7 @@ function SearchSelect({ level, placeholder, getOptions, onPick, getCreateParent 
   };
   box.setValue = setValue;
   box.reset = () => setValue(null);
-  box.refresh = () => { items = getOptions(); const it = items.find(x => x.id === picked); if (it) input.value = it.label; };
+  box.refresh = () => { items = getOptions(); const it = items.find(x => x.id === picked); input.value = display(it); };
   box.enable = on => {
     input.disabled = !on;
     box.classList.toggle('off', !on);

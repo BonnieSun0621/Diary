@@ -165,7 +165,20 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
 /* ---------- 状态转变链 ---------- */
 .chain { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .chain .arrow { color: var(--text-dim); }
-.state-pop { min-width: 280px; max-width: 420px; }
+/* 全屏遮罩 + 居中弹窗（状态编辑/导出锚点），避免被卡片裁切 */
+.pop-backdrop {
+  position: fixed; inset: 0; z-index: 40;
+  background: rgba(10, 11, 14, .5);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding-top: 16vh; overflow-y: auto;
+}
+.state-pop {
+  background: #1e2026; border: 1px solid var(--stroke); border-radius: 14px;
+  padding: 18px 20px; min-width: 340px; max-width: 560px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.55);
+  max-height: 68vh; overflow-y: auto;
+}
+.state-pop h3 { font-size: 14px; color: var(--text-dim); margin-bottom: 12px; font-weight: 600; }
 .state-pop .row.wrap { flex-wrap: wrap; }
 
 /* ---------- 手帐导出模板（深浅两色纸感） ---------- */

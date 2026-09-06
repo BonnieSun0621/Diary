@@ -70,36 +70,37 @@ async function renderDayView(root, dateStr) {
     }
     function editItem(idx, isNew) {
       const cur = seq[idx] || { v: '', t: '' };
+      // 全屏遮罩 + 居中弹窗：不受卡片布局裁切（修复"展开不完整"）
+      const backdrop = document.createElement('div');
+      backdrop.className = 'pop-backdrop';
       const pop = document.createElement('div');
-      pop.className = 'card picker-pop state-pop';
-      pop.style.cssText = 'position:absolute;z-index:30';
-      pop.innerHTML = `<div class="row wrap">${opts.map(o =>
+      pop.className = 'state-pop';
+      pop.innerHTML = `<h3>${field === 'mood' ? '心情' : '天气'} · 第 ${idx + 1} 段 / 5</h3>
+        <div class="row wrap">${opts.map(o =>
         `<button class="chip${o.value === cur.v ? ' on' : ''}" data-v="${o.value}">${o.label}</button>`).join('')}</div>
-        <div class="row" style="margin-top:8px"><span class="dim">时刻(选填)</span>
-        <input type="time" value="${cur.t || ''}"><button class="btn primary" style="padding:4px 14px">好</button></div>`;
-      const wrap = box.parentElement;
-      wrap.style.position = 'relative';
-      wrap.append(pop);
-      const rect = (isNew ? box.lastElementChild : box.children[idx * 2]).getBoundingClientRect();
-      const wr = wrap.getBoundingClientRect();
-      pop.style.left = Math.max(0, rect.left - wr.left) + 'px';
-      pop.style.top = (rect.bottom - wr.top + 6) + 'px';
+        <div class="row" style="margin-top:12px"><span class="dim">时刻(选填)</span>
+        <input type="time" value="${cur.t || ''}">
+        <div class="spacer"></div>
+        <button class="btn" data-act="cancel">取消</button>
+        <button class="btn primary" data-act="ok">好</button></div>`;
+      backdrop.append(pop);
+      document.body.append(backdrop);
       let v = cur.v;
       pop.querySelectorAll('[data-v]').forEach(b => b.onclick = () => {
         v = b.dataset.v;
         pop.querySelectorAll('[data-v]').forEach(x => x.classList.toggle('on', x === b));
       });
-      pop.querySelector('.btn').onclick = async () => {
+      const close = () => backdrop.remove();
+      backdrop.onclick = e => { if (e.target === backdrop) close(); };
+      pop.querySelector('[data-act=cancel]').onclick = close;
+      pop.querySelector('[data-act=ok]').onclick = async () => {
         if (!v) return toast('选一个状态');
         const t = pop.querySelector('input').value || null;
         const next = seq.slice();
         next[idx] = { v, t };
-        pop.remove();
+        close();
         await saveStates(field, next);
       };
-      pop.onblur = e => { if (!pop.contains(e.relatedTarget)) pop.remove(); };
-      pop.tabIndex = -1;
-      pop.focus();
     }
   };
   paintChain(emo.querySelector('#moods'), page.mood, 'mood',
