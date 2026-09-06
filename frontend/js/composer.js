@@ -35,7 +35,8 @@ function buildComposer(root, dateStr, onSaved) {
 
   const $ = s => box.querySelector(s);
   const st = { l1: null, l2: null, l3: null, dur: 0, editingId: null };
-  const syncSave = () => { $('#save').disabled = !(st.l3 && (parseDur($('#dur').value) || st.dur)); };
+  const curDur = () => parseDur($('#dur').value) || st.dur;
+  const syncSave = () => { $('#save').disabled = !(st.l3 && curDur()); };
 
   // ---- 三个可搜索下拉（ss.js） ----
   const ss1 = SearchSelect({
@@ -98,22 +99,22 @@ function buildComposer(root, dateStr, onSaved) {
     syncSave();
   }
 
-  // ---- 时长 ----
+  // ---- 时长：芯片/清零/手输全部联动保存按钮（修复"按钮不亮"） ----
   const syncDur = () => { $('#dur').value = st.dur ? fmtDur(st.dur) : ''; };
   box.querySelectorAll('[data-add]').forEach(b => b.onclick = () => {
-    st.dur = Math.min(1440, st.dur + +b.dataset.add); syncDur();
+    st.dur = Math.min(1440, st.dur + +b.dataset.add); syncDur(); syncSave();
   });
-  $('#durclear').onclick = () => { st.dur = 0; syncDur(); };
+  $('#durclear').onclick = () => { st.dur = 0; syncDur(); syncSave(); };
+  $('#dur').oninput = () => { st.dur = parseDur($('#dur').value) || 0; syncSave(); };
   $('#dur').onchange = () => { const v = parseDur($('#dur').value); st.dur = v == null ? st.dur : v; syncDur(); syncSave(); };
   const applyAutoEnd = () => {
     if ($('#t1').value && st.dur) $('#t2').value = min2hhmm(hhmm2min($('#t1').value) + st.dur);
   };
-  $('#t1').onchange = applyAutoEnd;
   $('#autoend').onclick = applyAutoEnd;
 
   // ---- 保存 ----
   const save = async () => {
-    const dur = parseDur($('#dur').value) || st.dur;
+    const dur = curDur();
     if (!dur) return toast('请先填写时长');
     if (!st.l3) return toast('请选到第三级标签');
     const body = {
@@ -124,8 +125,8 @@ function buildComposer(root, dateStr, onSaved) {
     try {
       if (st.editingId) await api.patch('/api/entries/' + st.editingId, { ...body, category_id: st.l3 });
       else await api.post('/api/entries', { ...body, category_id: st.l3 });
-      toast(st.editingId ? '已更新' : '记录成功 ✓');
-      onSaved();
+      toast(st.editingId ? '已更新 ✓' : '记录成功 ✓');
+      onSaved(); // 重渲染后录入器整体回到初始态，可直接录下一条
     } catch (err) { toast('保存失败：' + err.message); }
   };
   $('#save').onclick = save;
@@ -138,8 +139,8 @@ function buildComposer(root, dateStr, onSaved) {
     $('#t1').value = e.start_time || ''; $('#t2').value = e.end_time || '';
     $('#note').value = e.note || '';
     fillFromTagId(e.category_id);
-    box.scrollIntoView({ behavior: 'smooth' });
     box.querySelector('h2').textContent = '编辑记录（改完点保存）';
+    box.scrollIntoView({ behavior: 'smooth' });
   };
 }
 

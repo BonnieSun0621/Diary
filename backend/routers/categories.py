@@ -110,19 +110,56 @@ def rename_category(cid: int, body: CategoryPatch, conn=Depends(dep_db)):
 
 @router.delete("/{cid}")
 def delete_category(cid: int, conn=Depends(dep_db)):
+    """级联删除：母级连同其下整棵子树、以及子树内标签的全部活动记录一并删除。
+
+    前端删除前会先调 /subtree-size 弹确认框列出将删除的数量。
+    """
     node = conn.execute("SELECT * FROM categories WHERE id=?", (cid,)).fetchone()
     if node is None:
         raise HTTPException(404, "分类不存在")
-    if conn.execute("SELECT 1 FROM categories WHERE parent_id=?", (cid,)).fetchone():
-        raise HTTPException(409, "仍有子分类，请先删除或移动子级")
-    used = conn.execute(
-        "SELECT COUNT(*) c FROM entries WHERE category_id=?", (cid,)
+    # 收集整棵子树（含自身）
+    ids, frontier = [cid], [cid]
+    while frontier:
+        marks = ",".join("?" * len(frontier))
+        rows = conn.execute(
+            f"SELECT id FROM categories WHERE parent_id IN ({marks})", frontier
+        ).fetchall()
+        frontier = [r["id"] for r in rows]
+        ids.extend(frontier)
+    marks = ",".join("?" * len(ids))
+    n_entries = conn.execute(
+        f"SELECT COUNT(*) c FROM entries WHERE category_id IN ({marks})", ids
     ).fetchone()["c"]
-    if used:
-        raise HTTPException(409, f"该分类下还有 {used} 条记录，请先合并到其他分类")
-    conn.execute("DELETE FROM categories WHERE id=?", (cid,))
-    conn.commit()
-    return {"ok": True}
+    try:
+        conn.execute("BEGIN")
+        conn.execute(f"DELETE FROM entries WHERE category_id IN ({marks})", ids)
+        conn.execute(f"DELETE FROM categories WHERE id IN ({marks})", ids)
+        conn.execute("COMMIT")
+    except Exception as exc:
+        conn.execute("ROLLBACK")
+        raise HTTPException(500, f"删除失败已回滚：{exc}")
+    return {"ok": True, "deleted": {"categories": len(ids), "entries": n_entries}}
+
+
+@router.get("/{cid}/subtree-size")
+def subtree_size(cid: int, conn=Depends(dep_db)):
+    """删除前预览：将连带删除的分类数与记录数。"""
+    node = conn.execute("SELECT * FROM categories WHERE id=?", (cid,)).fetchone()
+    if node is None:
+        raise HTTPException(404, "分类不存在")
+    ids, frontier = [cid], [cid]
+    while frontier:
+        marks = ",".join("?" * len(frontier))
+        rows = conn.execute(
+            f"SELECT id FROM categories WHERE parent_id IN ({marks})", frontier
+        ).fetchall()
+        frontier = [r["id"] for r in rows]
+        ids.extend(frontier)
+    marks = ",".join("?" * len(ids))
+    n_entries = conn.execute(
+        f"SELECT COUNT(*) c FROM entries WHERE category_id IN ({marks})", ids
+    ).fetchone()["c"]
+    return {"categories": len(ids), "entries": n_entries}
 
 
 @router.post("/{cid}/merge")

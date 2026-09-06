@@ -142,10 +142,12 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
 .chart { width: 100%; height: 360px; }
 .chart-sun { height: 420px; }
 
-/* ---------- 设置 ---------- */
+/* ---------- 分类管理（Finder 式展开树） ---------- */
 .cat-node { padding: 5px 0; display: flex; align-items: center; gap: 8px; font-size: 14px; }
-.cat-node .cicon { width: 8px; height: 8px; border-radius: 50%; }
-.cat-children { margin-left: 22px; border-left: 1px solid var(--stroke); padding-left: 12px; }
+.cat-node .cicon { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.cat-node .arrow { width: 18px; text-align: center; cursor: pointer; font-size: 12px; }
+.cat-node:hover { background: var(--glass); border-radius: 8px; }
+.cat-node .mini[title=add], .cat-node .mini[title=merge] { font-size: 12px; }
 
 /* ---------- toast ---------- */
 #toast {

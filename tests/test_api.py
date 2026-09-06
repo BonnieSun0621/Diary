@@ -37,9 +37,12 @@ def test_category_crud_and_rename(client):
 
 
 def test_delete_blocked_by_entries(client):
+    """删除有记录的标签现在走级联删除（连带记录），不再 409。"""
     tid = sub_tag(client, "娱乐", "游戏", "塞尔达")
     client.post("/api/entries", json={"date": "2026-09-01", "category_id": tid, "duration_min": 60})
-    assert client.delete(f"/api/categories/{tid}").status_code == 409
+    r = client.delete(f"/api/categories/{tid}")
+    assert r.status_code == 200 and r.json()["deleted"] == {"categories": 1, "entries": 1}
+    assert client.get("/api/days/2026-09-01").json()["entries"] == []
 
 
 def test_merge_same_level(client):
@@ -226,3 +229,24 @@ def test_new_root_gets_palette_color(client):
     l3 = client.post("/api/categories", json={"name": "网站X", "parent_id": l2["id"]}).json()
     e = client.post("/api/entries", json={"date": "2026-09-06", "category_id": l3["id"], "duration_min": 50}).json()
     assert e["color"] == l1["color"] and e["path"] == ["自由职业", "接单", "网站X"]
+
+
+def test_delete_subtree_with_entries(client):
+    """母级删除 = 整棵子树 + 其下记录连带删除（前端已先弹确认）。"""
+    l1 = client.post("/api/categories", json={"name": "测试域"}).json()
+    l2 = client.post("/api/categories", json={"name": "测试型", "parent_id": l1["id"]}).json()
+    l3 = client.post("/api/categories", json={"name": "测试签", "parent_id": l2["id"]}).json()
+    client.post("/api/entries", json={"date": "2026-09-06", "category_id": l3["id"], "duration_min": 10})
+    client.post("/api/entries", json={"date": "2026-09-05", "category_id": l3["id"], "duration_min": 20})
+    size = client.get(f"/api/categories/{l1['id']}/subtree-size").json()
+    assert size == {"categories": 3, "entries": 2}
+    r = client.delete(f"/api/categories/{l1['id']}")
+    assert r.status_code == 200 and r.json() == {"ok": True, "deleted": {"categories": 3, "entries": 2}}
+    tree = client.get("/api/categories").json()
+    names = {n["name"] for n in tree}
+    assert not {"测试域", "测试型", "测试签"} & names
+    # 记录连带删除，其他日期不受影响
+    assert client.get("/api/days/2026-09-06").json()["entries"] == []
+    assert client.get("/api/days/2026-09-05").json()["entries"] == []
+    # 兄弟分类完好
+    assert "娱乐" in names

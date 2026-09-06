@@ -4,7 +4,7 @@ function SearchSelect({ level, placeholder, getOptions, onPick, getCreateParent 
   const box = document.createElement('div');
   box.className = 'picker ss';
   box.innerHTML = `
-    <input type="search" placeholder="${placeholder}" autocomplete="off">
+    <input type="text" placeholder="${placeholder}" autocomplete="off">
     <div class="picker-pop" hidden></div>`;
   const input = box.querySelector('input'), pop = box.querySelector('.picker-pop');
   let items = [], picked = null;
