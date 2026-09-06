@@ -43,6 +43,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 /* ---------- 布局 ---------- */
 #view { max-width: 980px; margin: 0 auto; padding: 28px 32px 80px 104px; }
 .card {
+  position: relative;            /* 撑起层叠上下文，配合 focus-within 让展开的下拉盖住后续卡片 */
   background: var(--glass); backdrop-filter: blur(18px);
   border: 1px solid var(--stroke); border-radius: var(--radius);
   padding: 18px 20px; margin-bottom: 16px;
@@ -98,9 +99,15 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
 .mini:hover { opacity: 1; }
 
 /* ---------- 标签选择器 ---------- */
+/* 关键：玻璃卡片用了 backdrop-filter 会产生独立合成层，下拉弹出层必须挂在
+   更高的层叠上下文里才能盖住"下面一张卡片"——
+   1) .picker 自身在 .card 内，展开时把整个 .card 提到顶层 z-index:50；
+   2) .picker-pop 自身 z-index:60，且不透明底色。 */
+.card { position: relative; }
+.card:focus-within { z-index: 50; }
 .picker { position: relative; }
 .picker-pop {
-  position: absolute; top: 42px; left: 0; right: 0; max-height: 300px; overflow-y: auto; z-index: 20;
+  position: absolute; top: 42px; left: 0; right: 0; max-height: 300px; overflow-y: auto; z-index: 60;
   background: #1e2026; border: 1px solid var(--stroke); border-radius: 12px; padding: 6px;
   box-shadow: 0 18px 40px rgba(0,0,0,.5);
 }
