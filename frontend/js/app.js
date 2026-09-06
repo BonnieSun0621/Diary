@@ -1,4 +1,6 @@
 // 应用入口：hash 路由（today / day/{date} / calendar / stats / settings）
+console.log('%c拾光日记 build v3.1 (20260906)%c 若版本不对请 ⌘⇧R 强刷',
+  'background:#A3B899;color:#17210f;padding:2px 8px;border-radius:4px;font-weight:600', 'color:#9a978f');
 const App = { tree: [], tags: [] };
 
 async function loadCats() {

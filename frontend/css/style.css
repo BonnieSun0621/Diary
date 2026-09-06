@@ -38,6 +38,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 #nav a i { font-style: normal; font-size: 11px; }
 #nav a:hover { background: var(--glass-strong); color: var(--text); }
 #nav a.active { background: var(--glass-strong); color: var(--text); border: 1px solid var(--stroke); }
+#nav .ver { margin-top: auto; font-size: 10px; color: var(--text-dim); opacity: .7; }
 
 /* ---------- 布局 ---------- */
 #view { max-width: 980px; margin: 0 auto; padding: 28px 32px 80px 104px; }
