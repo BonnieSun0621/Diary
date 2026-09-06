@@ -1,0 +1,13 @@
+{
+  "name": "拾光日记",
+  "short_name": "拾光",
+  "description": "可视化的个人时间日记",
+  "start_url": "/#/today",
+  "id": "com.bonnie.diary",
+  "display": "standalone",
+  "background_color": "#17181c",
+  "theme_color": "#17181c",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
