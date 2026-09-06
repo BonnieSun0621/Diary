@@ -11,9 +11,12 @@ async function renderDayView(root, dateStr) {
   const nav = document.createElement('div');
   nav.className = 'day-nav';
   nav.innerHTML = `
-    <button class="btn" id="prev">◀</button>
-    <div class="date-title">${isToday ? '今天 · ' : ''}${dateLabel(dateStr)}</div>
-    <button class="btn" id="next">▶</button>
+    <button class="btn" id="prev" title="前一天">◀</button>
+    <div>
+      <div class="date-title">${isToday ? '今天 · ' : ''}${dateLabel(dateStr)}</div>
+      <div class="dim">${isToday ? '记录此刻，或随时回看补记' : '正在查看过去的一天 · 可直接编辑'}</div>
+    </div>
+    <button class="btn" id="next" title="后一天">▶</button>
     <input type="date" id="jump" value="${dateStr}">
     ${isToday ? '' : '<button class="btn" id="back-today">回到今天</button>'}
     <div class="spacer"></div>
@@ -142,9 +145,9 @@ async function renderDayView(root, dateStr) {
 
   buildComposer(root, dateStr, () => renderDayView(root, dateStr));
 
-  // ---- 每日自由文字（自动保存） ----
+  // ---- 每日自由文字（自动保存）——次要卡片，视觉退后 ----
   const txt = document.createElement('div');
-  txt.className = 'card';
+  txt.className = 'card secondary';
   txt.innerHTML = `<h2>今日随想</h2><textarea id="daytext" placeholder="想写就写，不写也行…"></textarea>`;
   root.append(txt);
   const ta = txt.querySelector('#daytext');

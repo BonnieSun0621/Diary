@@ -1,4 +1,9 @@
 // 统计页：旭日图（三级下钻+面包屑）/ 堆叠柱（日周月年）/ 日历热力图（需求 §4-D）
+// 图表主题与 CSS 设计令牌同源（style.css --text-2 等），保证视觉统一
+const CHART_T = {
+  dim: '#a5a29a', grid: 'rgba(255,255,255,.07)', tipBg: '#1e2026',
+  accent: '#A3B899', heatFrom: '#232830', border: '#141519',
+};
 const RANGE_PRESETS = {
   '本月': () => [todayStr().slice(0, 7) + '-01', todayStr()],
   '近30天': () => [addDays(todayStr(), -29), todayStr()],
@@ -32,29 +37,38 @@ async function renderStats(root) {
     ctrl.querySelector('#e').value = e;
     const sunData = await api.get(`/api/stats/sunburst?start=${s}&end=${e}`);
     sun.setOption({
-      tooltip: { formatter: p => `${p.name}<br/>${fmtDur(p.value)}` },
+      tooltip: { backgroundColor: CHART_T.tipBg, borderColor: 'rgba(255,255,255,.1)',
+        textStyle: { color: '#eceae7' }, formatter: p => `${p.name}<br/><b>${fmtDur(p.value)}</b>` },
       series: [{ type: 'sunburst', radius: ['12%', '92%'], data: sunData.data,
-        label: { minAngle: 8, color: '#17181c' }, itemStyle: { borderColor: '#17181c', borderWidth: 1 } }],
+        label: { minAngle: 8, color: '#17181c', fontSize: 12 },
+        itemStyle: { borderColor: CHART_T.border, borderWidth: 1.5 },
+        emphasis: { itemStyle: { shadowBlur: 12, shadowColor: 'rgba(0,0,0,.4)' } } }],
     }, true);
     const tr = await api.get(`/api/stats/trend?start=${s}&end=${e}&granularity=${gran}`);
     trend.setOption({
-      tooltip: { trigger: 'axis' },
-      legend: { textStyle: { color: '#9a978f' }, top: 0 },
+      tooltip: { trigger: 'axis', backgroundColor: CHART_T.tipBg, borderColor: 'rgba(255,255,255,.1)',
+        textStyle: { color: '#eceae7' },
+        valueFormatter: v => fmtDur(v) },
+      legend: { textStyle: { color: CHART_T.dim }, top: 0, icon: 'circle', itemWidth: 8 },
       grid: { left: 48, right: 16, top: 36, bottom: 28 },
-      xAxis: { type: 'category', data: tr.labels, axisLabel: { color: '#9a978f' } },
-      yAxis: { type: 'value', name: '分钟', axisLabel: { color: '#9a978f' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,.08)' } } },
-      series: tr.series.map(x => ({ name: x.name, type: 'bar', stack: 't', itemStyle: { color: x.color }, data: x.data })),
+      xAxis: { type: 'category', data: tr.labels, axisLabel: { color: CHART_T.dim },
+        axisLine: { lineStyle: { color: 'rgba(255,255,255,.1)' } } },
+      yAxis: { type: 'value', name: '分钟', nameTextStyle: { color: CHART_T.dim },
+        axisLabel: { color: CHART_T.dim }, splitLine: { lineStyle: { color: CHART_T.grid } } },
+      series: tr.series.map(x => ({ name: x.name, type: 'bar', stack: 't',
+        itemStyle: { color: x.color, borderRadius: [3, 3, 0, 0] }, barMaxWidth: 42, data: x.data })),
     }, true);
     const y = +e.slice(0, 4);
     const hm = await api.get('/api/stats/heatmap?year=' + y);
     heat.setOption({
-      tooltip: { formatter: p => `${p.value[0]}<br/>${fmtDur(p.value[1])}` },
+      tooltip: { backgroundColor: CHART_T.tipBg, borderColor: 'rgba(255,255,255,.1)',
+        textStyle: { color: '#eceae7' }, formatter: p => `${p.value[0]}<br/><b>${fmtDur(p.value[1])}</b>` },
       visualMap: { min: 0, max: Math.max(240, ...hm.days.map(d => d.total_min)), orient: 'horizontal', left: 10, bottom: 0,
-        inRange: { color: ['#2a2d34', '#A3B899'] }, textStyle: { color: '#9a978f' } },
+        inRange: { color: [CHART_T.heatFrom, CHART_T.accent] }, textStyle: { color: CHART_T.dim } },
       calendar: { top: 40, left: 40, right: 20, bottom: 40, range: y, cellSize: ['auto', 16],
-        splitLine: { lineStyle: { color: 'rgba(255,255,255,.15)' } },
-        itemStyle: { color: 'rgba(255,255,255,.04)', borderWidth: 4, borderColor: 'transparent' },
-        dayLabel: { color: '#9a978f' }, monthLabel: { color: '#9a978f' }, yearLabel: { show: false } },
+        splitLine: { lineStyle: { color: 'rgba(255,255,255,.12)' } },
+        itemStyle: { color: 'rgba(255,255,255,.03)', borderWidth: 4, borderColor: 'transparent', borderRadius: 4 },
+        dayLabel: { color: CHART_T.dim, fontSize: 11 }, monthLabel: { color: CHART_T.dim }, yearLabel: { show: false } },
       series: [{ type: 'heatmap', coordinateSystem: 'calendar',
         data: hm.days.map(d => [d.date, d.total_min]) }],
     }, true);

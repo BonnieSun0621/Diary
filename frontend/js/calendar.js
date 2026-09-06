@@ -21,6 +21,7 @@ async function renderCalendar(root, month) {
   card.innerHTML = `<div class="cal-week">${['一', '二', '三', '四', '五', '六', '日'].map(d => `<span>${d}</span>`).join('')}</div><div class="cal-grid" id="grid"></div>`;
   root.append(card);
 
+  // ---- 日历概要：今天高亮、未来弱化、有记录日显示时长徽章 ----
   const data = await api.get('/api/stats/calendar?month=' + month);
   const byDate = Object.fromEntries(data.days.map(d => [d.date, d]));
   const grid = card.querySelector('#grid');
@@ -39,11 +40,14 @@ async function renderCalendar(root, month) {
     const ds = `${month}-${String(d).padStart(2, '0')}`;
     const info = byDate[ds];
     const cell = document.createElement('div');
-    cell.className = 'cal-cell' + (ds === t ? ' today' : '');
-    const isFuture = ds > t;
+    cell.className = 'cal-cell'
+      + (ds === t ? ' today' : '')
+      + (info ? ' has-rec' : '')
+      + (ds > t ? ' future' : '');
     cell.innerHTML = `
-      <div class="d">${d}${isFuture ? '<span class="dim" style="float:right">未来</span>' : ''}</div>
-      ${info ? `<div class="sum">${info.count} 条 · ${fmtDur(info.total_min)}</div>
+      <div class="d">${d}</div>
+      ${info ? `<div class="sum">${info.count} 条</div>
+                <span class="badge">${fmtDur(info.total_min)}</span>
                 <div class="dots">${info.colors.map(c => `<i style="background:${c}"></i>`).join('')}</div>` : ''}`;
     cell.onclick = () => location.hash = '#/day/' + ds;
     grid.append(cell);
