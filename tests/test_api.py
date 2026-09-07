@@ -293,3 +293,18 @@ def test_icon_only_on_root(client):
     assert e["path"] == ["新领域", "子型", "子签"]
     assert e["root_icon"] == l1["icon"]
     assert "icon" not in e
+
+
+def test_icon_editable_on_root(client):
+    """v3.4：一级大类图标前端可编辑（PATCH icon）；二三级拒绝。"""
+    tree = client.get("/api/categories").json()
+    l1 = find_node(tree, "娱乐")
+    r = client.patch(f"/api/categories/{l1['id']}", json={"icon": "🕹"})
+    assert r.status_code == 200 and r.json()["icon"] == "🕹"
+    # 清除图标（空串→None）
+    r = client.patch(f"/api/categories/{l1['id']}", json={"icon": ""})
+    assert r.json()["icon"] is None
+    client.patch(f"/api/categories/{l1['id']}", json={"icon": "🎮"})  # 还原
+    l2 = find_node(tree, "工作")
+    l2 = find_node(l2["children"], "项目工作")
+    assert client.patch(f"/api/categories/{l2['id']}", json={"icon": "🧩"}).status_code == 400

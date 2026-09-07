@@ -252,6 +252,8 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
 }
 .state-pop h3 { font-size: 14px; color: var(--text-2); margin-bottom: 12px; font-weight: 600; }
 .state-pop .row.wrap { flex-wrap: wrap; }
+.emoji-grid { gap: 6px; max-width: 480px; }
+.emoji-grid .chip.emoji { font-size: 18px; padding: 5px 9px; line-height: 1; }
 
 /* ---------- 手帐导出模板（深浅两色纸感） ---------- */
 .journal { width: 760px; padding: 44px 48px; font-family: "PingFang SC", -apple-system, serif; }

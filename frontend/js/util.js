@@ -45,6 +45,38 @@ function toast(msg) {
   clearTimeout(toast._t);
   toast._t = setTimeout(() => el.classList.remove('show'), 2200);
 }
+// 一级大类 emoji 选择器：常用图标网格 + 自由输入（v3.4 前端可编辑图标）
+const EMOJI_CHOICES = ['💼','🎮','🚗','🍜','💪','📚','🥂','🧾','🗂','📌','🎯','🌱','🧰','☕','🎲','🧭','🛋','📷','💤','🚶','🏠','✈️','🎵','📺','🧹','🛒','👋','🩺','🏃','📕','🎓','🌐','💻','🎨','⚙️','🌍','🍎','📞','🧘','🎬'];
+function pickEmoji(current, onDone) {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'pop-backdrop';
+  const pop = document.createElement('div');
+  pop.className = 'state-pop';
+  pop.innerHTML = '<h3>选择大类图标</h3>' +
+    '<div class="row wrap emoji-grid"></div>' +
+    '<div class="row" style="margin-top:12px"><span class="dim">或直接输入</span>' +
+    '<input type="text" maxlength="4" style="width:64px;text-align:center" placeholder="🙂">' +
+    '<div class="spacer"></div>' +
+    '<button class="btn" data-act="clear">清除</button>' +
+    '<button class="btn" data-act="cancel">取消</button></div>';
+  backdrop.append(pop);
+  document.body.append(backdrop);
+  const grid = pop.querySelector('.emoji-grid');
+  for (const e of EMOJI_CHOICES) {
+    const b = document.createElement('button');
+    b.className = 'chip emoji' + (e === current ? ' on' : '');
+    b.textContent = e;
+    b.onclick = () => { close(); onDone(e); };
+    grid.append(b);
+  }
+  const inp = pop.querySelector('input');
+  inp.onkeydown = ev => { if (ev.key === 'Enter' && inp.value.trim()) { close(); onDone(inp.value.trim()); } };
+  pop.querySelector('[data-act=clear]').onclick = () => { close(); onDone(''); };
+  pop.querySelector('[data-act=cancel]').onclick = () => backdrop.remove();
+  backdrop.onclick = ev => { if (ev.target === backdrop) backdrop.remove(); };
+  function close() { backdrop.remove(); }
+}
+
 // 把分类树拍平成三级标签列表（含引用），供搜索选择
 function flattenTags(tree) {
   const out = [];

@@ -105,6 +105,11 @@ def rename_category(cid: int, body: CategoryPatch, conn=Depends(dep_db)):
     fields = body.model_dump(exclude_unset=True)
     if "name" in fields:
         fields["name"] = fields["name"].strip()
+    if "icon" in fields:
+        if node["level"] != 1:
+            raise HTTPException(400, "只有一级大类可设置图标")  # v3.3 规则
+        if fields["icon"] is not None:
+            fields["icon"] = fields["icon"].strip() or None
     if not fields:
         raise HTTPException(400, "无可更新字段")
     sets = ", ".join(f"{k}=?" for k in fields)
