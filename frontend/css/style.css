@@ -174,7 +174,7 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
 .timeline { position: relative; height: 64px; margin: 12px 0 4px; }
 .timeline .track {
   position: absolute; left: 0; right: 0; top: 10px; height: 38px; border-radius: 12px;
-  background: rgba(0,0,0,.28); border: 1px solid var(--stroke); overflow: visible;
+  background: rgba(0,0,0,.28); border: 1px solid var(--stroke); overflow: hidden;
 }
 .timeline .blk {
   position: absolute; top: 10px; height: 38px; border-radius: 8px; cursor: default;
@@ -184,16 +184,24 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
   transition: filter .12s, transform .12s;
 }
 .timeline .blk:hover { filter: brightness(1.25); transform: scaleY(1.06); z-index: 5; }
-.timeline .blk .tip {
-  display: none; position: absolute; bottom: calc(100% + 8px); left: 0; z-index: 60;
+.timeline .tip {
+  display: none; position: absolute; top: calc(100% + 8px); left: 0; z-index: 60;
+  width: 232px; box-sizing: border-box;            /* 固定宽度，信息 ≤5 行 */
   background: #1e2026; border: 1px solid var(--stroke-bright); border-radius: 10px;
-  padding: 8px 12px; font-size: 12px; line-height: 1.55; max-width: 280px; color: var(--text);
+  padding: 8px 12px; font-size: 12px; line-height: 1.55; color: var(--text);
   box-shadow: var(--shadow-2); pointer-events: none;
 }
-.timeline .blk .tip-path { color: var(--text-2); font-size: 11px; margin-left: 4px; }
-.timeline .blk:hover .tip { display: block; }
-/* 靠近轨道右端的块：提示卡右对齐，避免溢出视口 */
-.timeline .blk[data-tip=left] .tip { left: auto; right: 0; }
+.timeline .tip b { display: block; font-size: 13px; }         /* 1 行 标签名 */
+.timeline .tip .tip-path {                                          /* 2 行 路径（省略号） */
+  display: block; color: var(--text-2); font-size: 11px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.timeline .tip .tip-time { display: block; }                        /* 3 行 起止·时长 */
+.timeline .tip i {                                             /* 4-5 行 备注（最多两行） */
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  color: var(--text-2); font-style: normal;
+}
+/* 卡挂在 .timeline 层，JS 悬停算好左缘 */
 .timeline .tick { position: absolute; top: 52px; font-size: 10px; color: var(--text-2); transform: translateX(-50%); }
 
 /* ---------- 日历页 ---------- */
