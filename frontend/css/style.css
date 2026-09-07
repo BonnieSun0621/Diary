@@ -177,8 +177,8 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
   background: rgba(0,0,0,.40); border: 1px solid var(--stroke);
 }
 .timeline .blk {
-  position: absolute; top: 10px; height: 30px; border-radius: 8px; cursor: default; z-index: 2;
-  /* 下缘 40px = 基准线位置：色块坐在轨道内，底缘与时间线齐平 */
+  position: absolute; top: auto; bottom: 0; height: 30px; border-radius: 8px; cursor: default; z-index: 2;
+  /* bottom:0 锚定轨道底边：色块下缘与轨道/基准线恒重合（不再依赖手调 top 数值） */
   background: linear-gradient(180deg,
       color-mix(in srgb, var(--c) 72%, transparent) 0%,
       color-mix(in srgb, var(--c) 46%, transparent) 55%,
