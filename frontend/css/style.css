@@ -171,14 +171,14 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
 .tag-pill.on { border-color: currentColor; background: var(--accent-soft); }
 
 /* ---------- 时间轴：加高色带 + 透明质感 + 悬浮信息卡 ---------- */
-.timeline { position: relative; height: 62px; margin: 12px 0 4px; }
+.timeline { position: relative; height: 56px; margin: 12px 0 4px; }
 .timeline .track {
-  position: absolute; left: 0; right: 0; top: 10px; height: 38px; border-radius: 12px;
+  position: absolute; left: 0; right: 0; top: 10px; height: 30px; border-radius: 10px;
   background: rgba(0,0,0,.40); border: 1px solid var(--stroke);
 }
 .timeline .blk {
-  position: absolute; top: 8px; height: 38px; border-radius: 8px; cursor: default; z-index: 2;
-  /* 下缘 48px = 时间线基准线位置：色块坐在轨道内，底缘与时间线齐平 */
+  position: absolute; top: 10px; height: 30px; border-radius: 8px; cursor: default; z-index: 2;
+  /* 下缘 40px = 基准线位置：色块坐在轨道内，底缘与时间线齐平 */
   background: linear-gradient(180deg,
       color-mix(in srgb, var(--c) 72%, transparent) 0%,
       color-mix(in srgb, var(--c) 46%, transparent) 55%,
@@ -222,8 +222,8 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
   color: var(--text-2); font-style: normal;
 }
 /* 卡挂在 .timeline 层，JS 悬停算好左缘 */
-.timeline .baseline { position: absolute; left: 0; right: 0; top: 48px; height: 1px; background: var(--stroke-bright); }
-.timeline .tick { position: absolute; top: 50px; font-size: 10px; color: var(--text-2); transform: translateX(-50%); }
+.timeline .baseline { position: absolute; left: 0; right: 0; top: 40px; height: 1px; background: var(--stroke-bright); }
+.timeline .tick { position: absolute; top: 42px; font-size: 10px; color: var(--text-2); transform: translateX(-50%); }
 
 /* ---------- 日历页 ---------- */
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--sp-2); }
