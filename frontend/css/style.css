@@ -177,7 +177,7 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
   background: rgba(0,0,0,.40); border: 1px solid var(--stroke);
 }
 .timeline .blk {
-  position: absolute; top: 10px; height: 38px; border-radius: 8px; cursor: default; z-index: 2;
+  position: absolute; top: 8px; height: 38px; border-radius: 8px; cursor: default; z-index: 2;
   /* 下缘 48px = 时间线基准线位置：色块坐在轨道内，底缘与时间线齐平 */
   background: linear-gradient(180deg,
       color-mix(in srgb, var(--c) 72%, transparent) 0%,
