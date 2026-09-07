@@ -6,6 +6,9 @@ function renderTimeline(entries) {
   const track = document.createElement('div');
   track.className = 'track';
   box.append(track);
+  const base = document.createElement('div');
+  base.className = 'baseline';
+  box.append(base);
   const timed = entries.filter(e => e.start_time && e.end_time);
   for (const e of timed) {
     const s = hhmm2min(e.start_time), e2 = hhmm2min(e.end_time);
@@ -49,7 +52,7 @@ function renderTimeline(entries) {
   if (!timed.length) {
     const hint = document.createElement('span');
     hint.className = 'tick';
-    hint.style.left = '0%'; hint.style.transform = 'none'; hint.style.top = '76px';
+    hint.style.left = '0%'; hint.style.transform = 'none'; hint.style.top = '18px';
     hint.textContent = '（为记录填写起止时间后，这里会显示一天的色块分带）';
     box.append(hint);
   }

@@ -171,13 +171,14 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
 .tag-pill.on { border-color: currentColor; background: var(--accent-soft); }
 
 /* ---------- 时间轴：加高色带 + 透明质感 + 悬浮信息卡 ---------- */
-.timeline { position: relative; height: 112px; margin: 12px 0 4px; }
+.timeline { position: relative; height: 62px; margin: 12px 0 4px; }
 .timeline .track {
-  position: absolute; left: 0; right: 0; top: 66px; height: 38px; border-radius: 12px;
+  position: absolute; left: 0; right: 0; top: 10px; height: 38px; border-radius: 12px;
   background: rgba(0,0,0,.40); border: 1px solid var(--stroke);
 }
 .timeline .blk {
-  position: absolute; bottom: 46px; height: 38px; border-radius: 8px; cursor: default; z-index: 2;
+  position: absolute; top: 10px; height: 38px; border-radius: 8px; cursor: default; z-index: 2;
+  /* 下缘 48px = 时间线基准线位置：色块坐在轨道内，底缘与时间线齐平 */
   background: linear-gradient(180deg,
       color-mix(in srgb, var(--c) 72%, transparent) 0%,
       color-mix(in srgb, var(--c) 46%, transparent) 55%,
@@ -196,12 +197,11 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
   background: linear-gradient(115deg, rgba(255,255,255,.16) 0%, transparent 38%, transparent 62%, rgba(255,255,255,.06) 100%);
 }
 .timeline .blk:hover {
-  transform: translateY(-8px);               /* 向上浮起，永远在轨道底线之上 */
-  filter: brightness(1.18) saturate(1.2);
+  filter: brightness(1.22) saturate(1.25);   /* 原位提亮+描边，不位移，保持与时间线齐平 */
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.55),
     inset 0 -1px 0 rgba(255,255,255,.12),
-    0 10px 22px rgba(0,0,0,.45);
+    0 0 0 2px rgba(255,255,255,.25), 0 6px 16px rgba(0,0,0,.4);
   z-index: 6;
 }
 .timeline .tip {
@@ -222,7 +222,8 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
   color: var(--text-2); font-style: normal;
 }
 /* 卡挂在 .timeline 层，JS 悬停算好左缘 */
-.timeline .tick { position: absolute; top: 108px; font-size: 10px; color: var(--text-2); transform: translateX(-50%); }
+.timeline .baseline { position: absolute; left: 0; right: 0; top: 48px; height: 1px; background: var(--stroke-bright); }
+.timeline .tick { position: absolute; top: 50px; font-size: 10px; color: var(--text-2); transform: translateX(-50%); }
 
 /* ---------- 日历页 ---------- */
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--sp-2); }
