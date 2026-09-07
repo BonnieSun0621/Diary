@@ -15,8 +15,12 @@ function renderTimeline(entries) {
       blk.className = 'blk';
       blk.style.left = (a / 1440 * 100) + '%';
       blk.style.width = ((b - a) / 1440 * 100) + '%';
-      blk.style.background = e.color || '#888';
-      blk.title = `${e.path.join(' › ')} ${e.start_time}–${e.end_time}`;
+      blk.style.setProperty('--c', e.color || '#888');
+      if (a > 960) blk.dataset.tip = 'left';  // 16:00 之后起始的块，提示卡向左展开
+      blk.innerHTML = `<span class="tip"><b>${esc(e.path[e.path.length - 1])}</b>
+        <span class="tip-path">${esc(e.path.join(' › '))}</span><br>
+        ${e.start_time}–${e.end_time} · ${fmtDur(e.duration_min)}
+        ${e.note ? `<br><i>“${esc(e.note)}”</i>` : ''}</span>`;
       track.append(blk);
     }
   }
