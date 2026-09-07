@@ -173,12 +173,11 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
 /* ---------- 时间轴：加高色带 + 透明质感 + 悬浮信息卡 ---------- */
 .timeline { position: relative; height: 96px; margin: 12px 0 4px; }
 .timeline .track {
-  position: absolute; left: 0; right: 0; top: 42px; height: 38px; border-radius: 12px;
-  background: rgba(0,0,0,.45); border: 1px solid var(--stroke);
-  box-shadow: inset 0 2px 8px rgba(0,0,0,.55);   /* 凹槽：色块坐在槽内 */
+  position: absolute; left: 0; right: 0; top: 46px; height: 38px; border-radius: 12px;
+  background: rgba(0,0,0,.40); border: 1px solid var(--stroke);
 }
 .timeline .blk {
-  position: absolute; top: 42px; height: 38px; border-radius: 8px; cursor: default;
+  position: absolute; top: 36px; height: 38px; border-radius: 8px; cursor: default; z-index: 2;
   background: linear-gradient(180deg,
       color-mix(in srgb, var(--c) 72%, transparent) 0%,
       color-mix(in srgb, var(--c) 46%, transparent) 55%,
@@ -189,7 +188,7 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.45),     /* 顶缘高光 */
     inset 0 -1px 0 rgba(255,255,255,.10),    /* 底缘微光 */
-    0 2px 6px rgba(0,0,0,.28);               /* 落在槽底的投影 */
+    0 4px 10px rgba(0,0,0,.35);              /* 投影落在轨道上：骑在时间轴之上 */
   transition: transform .15s ease, filter .15s ease, box-shadow .15s ease;
 }
 .timeline .blk::after {                      /* 斜向反光条：玻璃折射感 */
@@ -197,7 +196,7 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
   background: linear-gradient(115deg, rgba(255,255,255,.16) 0%, transparent 38%, transparent 62%, rgba(255,255,255,.06) 100%);
 }
 .timeline .blk:hover {
-  transform: translateY(-6px);               /* 向上浮起，永远在轨道底线之上 */
+  transform: translateY(-8px);               /* 向上浮起，永远在轨道底线之上 */
   filter: brightness(1.18) saturate(1.2);
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.55),
@@ -223,7 +222,7 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
   color: var(--text-2); font-style: normal;
 }
 /* 卡挂在 .timeline 层，JS 悬停算好左缘 */
-.timeline .tick { position: absolute; top: 84px; font-size: 10px; color: var(--text-2); transform: translateX(-50%); }
+.timeline .tick { position: absolute; top: 88px; font-size: 10px; color: var(--text-2); transform: translateX(-50%); }
 
 /* ---------- 日历页 ---------- */
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--sp-2); }
