@@ -49,7 +49,7 @@ function renderTimeline(entries) {
   if (!timed.length) {
     const hint = document.createElement('span');
     hint.className = 'tick';
-    hint.style.left = '0%'; hint.style.transform = 'none'; hint.style.top = '12px';
+    hint.style.left = '0%'; hint.style.transform = 'none'; hint.style.top = '52px';
     hint.textContent = '（为记录填写起止时间后，这里会显示一天的色块分带）';
     box.append(hint);
   }
