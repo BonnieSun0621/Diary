@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ..database import connect
 from ..helpers import CategoryIn, CategoryPatch, MergeIn, load_cats
-from ..seed import EXTRA_PALETTE
+from ..seed import EXTRA_PALETTE, ICON_POOL
 
 router = APIRouter(prefix="/api/categories", tags=["categories"])
 
@@ -61,10 +61,14 @@ def create_category(body: CategoryIn, conn=Depends(dep_db)):
     if body.parent_id is None:
         level, parent = 1, None
         color = body.color
+        icon = body.icon
         if not color:  # 用户新建的一级领域：按数量顺延取备用色
             n = conn.execute("SELECT COUNT(*) c FROM categories WHERE level=1").fetchone()["c"]
             color = EXTRA_PALETTE[n % len(EXTRA_PALETTE)]
+        if not icon:   # v3.3：只有大类有图标，新建时从图标池自动分配
+            icon = ICON_POOL[n % len(ICON_POOL)]
     else:
+        icon = None  # v3.3：二三级不存图标
         parent = conn.execute(
             "SELECT * FROM categories WHERE id=?", (body.parent_id,)
         ).fetchone()
@@ -86,7 +90,7 @@ def create_category(body: CategoryIn, conn=Depends(dep_db)):
     ).fetchone()["o"]
     cur = conn.execute(
         "INSERT INTO categories(name,parent_id,level,color,icon,sort_order) VALUES (?,?,?,?,?,?)",
-        (name, body.parent_id, level, color, body.icon, order),
+        (name, body.parent_id, level, color, icon, order),
     )
     conn.commit()
     row = conn.execute("SELECT * FROM categories WHERE id=?", (cur.lastrowid,)).fetchone()

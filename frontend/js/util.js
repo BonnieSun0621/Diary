@@ -51,7 +51,7 @@ function flattenTags(tree) {
   for (const l1 of tree)
     for (const l2 of l1.children || [])
       for (const l3 of l2.children || [])
-        out.push({ id: l3.id, name: l3.name, icon: l3.icon || l2.icon || l1.icon,
-                   color: l1.color, path: [l1.name, l2.name, l3.name], parent2: l2 });
+        out.push({ id: l3.id, name: l3.name,
+                   color: l1.color, path: [l1.name, l2.name, l3.name], parent2: l2 });  // v3.3：图标只属于一级
   return out;
 }

@@ -20,7 +20,7 @@ async function exportJournalPng(day) {
   const listHtml = day.entries.map(e => `
     <div class="j-entry">
       <span class="j-dot" style="background:${e.color}"></span>
-      <div>${e.icon} ${e.path.join(' › ')}${e.start_time && e.end_time ? ` <span style="opacity:.6">${e.start_time}–${e.end_time}</span>` : ''}
+      <div>${e.path.join(' › ')}${e.start_time && e.end_time ? ` <span style="opacity:.6">${e.start_time}–${e.end_time}</span>` : ''}
         ${e.note ? `<span class="j-note">“${esc2(e.note)}”</span>` : ''}</div>
       <span class="j-dur">${fmtDur(e.duration_min)}</span>
     </div>`).join('') || '<div style="opacity:.6">这一天没有记录</div>';

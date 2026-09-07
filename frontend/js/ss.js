@@ -9,7 +9,7 @@ function SearchSelect({ level, placeholder, getOptions, onPick, getCreateParent 
   const input = box.querySelector('input'), pop = box.querySelector('.picker-pop');
   let items = [], picked = null;
 
-  const display = it => (it ? (it.icon ? it.icon + ' ' + it.text : it.text) : '');
+  const display = it => (it ? it.text : '');  // v3.3：图标只在一级下拉的选项前显示，回显纯名称
   const setValue = v => { picked = v; const it = items.find(x => x.id === v); input.value = display(it); };
   const close = () => { pop.hidden = true; };
   const open = () => {
@@ -26,7 +26,8 @@ function SearchSelect({ level, placeholder, getOptions, onPick, getCreateParent 
       pop.append(o);
     };
     for (const t of hits.slice(0, 40))
-      addOpt(t.icon || '🏷', t.name, t.path.slice(0, -1).join(' › '), () => { setValue(t.id); close(); onPick(t.id); });
+      // v3.3：一级选项带大类图标，二/三级纯名称（数据里 icon 仅一级有）
+      addOpt(t.icon || '', t.name, t.path.slice(0, -1).join(' › '), () => { setValue(t.id); close(); onPick(t.id); });
     if (kw && !exact)
       addOpt('＋', `新建「${input.value.trim()}」`, '回车确认', () => doCreate(input.value.trim()));
     if (!pop.children.length) { close(); return; }

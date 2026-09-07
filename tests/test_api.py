@@ -273,3 +273,23 @@ def test_entry_on_any_level(client):
     assert any(x["id"] == l1["id"] for x in recent)
     # 日详情正常
     assert len(client.get("/api/days/2026-09-06").json()["entries"]) == 2
+
+
+def test_icon_only_on_root(client):
+    """v3.3 图标规则：只有一级有图标；新建一级自动配图标；二三级恒为 NULL。"""
+    tree = client.get("/api/categories").json()
+    for n in tree:
+        assert n["icon"], f"一级 {n['name']} 应有图标"
+        for c in n["children"] or []:
+            assert c["icon"] is None, f"二级 {n['name']}>{c['name']} 不应有图标"
+    # 用户新建一级 → 自动从图标池分配
+    l1 = client.post("/api/categories", json={"name": "新领域"}).json()
+    assert l1["icon"], l1
+    l2 = client.post("/api/categories", json={"name": "子型", "parent_id": l1["id"]}).json()
+    assert l2["icon"] is None
+    # 记录输出：path 纯名称 + root_icon 只有一级图标
+    l3 = client.post("/api/categories", json={"name": "子签", "parent_id": l2["id"]}).json()
+    e = client.post("/api/entries", json={"date": "2026-09-06", "category_id": l3["id"], "duration_min": 30}).json()
+    assert e["path"] == ["新领域", "子型", "子签"]
+    assert e["root_icon"] == l1["icon"]
+    assert "icon" not in e

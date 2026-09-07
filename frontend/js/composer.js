@@ -55,7 +55,7 @@ function buildComposer(root, dateStr, onSaved) {
     level: 2, placeholder: '先选一级',
     getOptions: () => {
       const n = App.tree.find(x => x.id === st.l1);
-      return n ? (n.children || []).map(c => ({ id: c.id, name: c.name, icon: c.icon, text: c.name, path: [n.name, c.name] })) : [];
+      return n ? (n.children || []).map(c => ({ id: c.id, name: c.name, text: c.name, path: [n.name, c.name] })) : [];  // v3.3：子级无图标
     },
     onPick: id => { st.l2 = id; st.l3 = null; ss3.reset(); ss3.enable(id != null); syncSave(); },
     getCreateParent: () => st.l1,
@@ -64,7 +64,7 @@ function buildComposer(root, dateStr, onSaved) {
     level: 3, placeholder: '3️⃣ 三级 · 标签（可跳过）',
     getOptions: () => {
       const l1 = App.tree.find(x => x.id === st.l1), l2 = l1 && (l1.children || []).find(x => x.id === st.l2);
-      return l2 ? (l2.children || []).map(c => ({ id: c.id, name: c.name, icon: c.icon || l2.icon, text: c.name, path: [l1.name, l2.name, c.name] })) : [];
+      return l2 ? (l2.children || []).map(c => ({ id: c.id, name: c.name, text: c.name, path: [l1.name, l2.name, c.name] })) : [];  // v3.3：子级无图标
     },
     onPick: id => { st.l3 = id; syncSave(); },
     getCreateParent: () => st.l2,
@@ -83,7 +83,7 @@ function buildComposer(root, dateStr, onSaved) {
       const p = document.createElement('button');
       p.className = 'tag-pill';
       p.style.color = t.color;
-      p.innerHTML = `<span>${t.icon || '🏷'}</span><span style="color:var(--text)">${esc(t.name)}</span><span class="dim">${esc(t.root_name)} › ${esc(t.parent_name)}</span>`;
+      p.innerHTML = `<span style="color:var(--text)">${esc(t.name)}</span><span class="dim">${esc([t.root_name, t.parent_name].filter(Boolean).join(' › '))}</span>`;  // v3.3：pill 纯名称+路径
       p.onclick = () => fillFromCatId(t.id);
       r.append(p);
     }

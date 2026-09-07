@@ -23,11 +23,10 @@ def dep_db():
 def entry_out(cats, row):
     path = cat_path(cats, row["category_id"])
     names = [p["name"] for p in path]
-    icons = [p["icon"] for p in path if p["icon"]]
     return {
         **dict(row),
         "path": names,
-        "icon": icons[-1] if icons else "🏷",
+        "root_icon": path[0]["icon"] or "",  # v3.3：只有大类图标
         "color": path[0]["color"],
     }
 
