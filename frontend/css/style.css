@@ -239,7 +239,7 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
 .chain .arrow { color: var(--text-2); }
 /* 全屏遮罩 + 居中弹窗（状态编辑/导出锚点），避免被卡片裁切 */
 .pop-backdrop {
-  position: fixed; inset: 0; z-index: 40;
+  position: fixed; inset: 0; z-index: 100;  /* 高于 .card:focus-within(50)：弹窗期间卡片内输入抢焦点也不会被盖 */
   background: rgba(10, 11, 14, .5);
   display: flex; align-items: flex-start; justify-content: center;
   padding-top: 16vh; overflow-y: auto;

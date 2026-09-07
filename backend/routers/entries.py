@@ -103,8 +103,7 @@ def create_entry(body: EntryIn, conn=Depends(dep_db)):
         node = conn.execute("SELECT * FROM categories WHERE id=?", (cid,)).fetchone()
         if node is None:
             raise HTTPException(404, "分类不存在")
-        if node["level"] != 3:
-            raise HTTPException(400, "记录需挂在第 3 级标签上")
+        # 需求 v3.2：记录可挂在 1/2/3 任一级（如"睡眠"只选到一级即可保存）
     cur = conn.execute(
         "INSERT INTO entries(date,category_id,duration_min,start_time,end_time,note) VALUES (?,?,?,?,?,?)",
         (body.date, cid, body.duration_min, body.start_time, body.end_time, body.note),
@@ -128,8 +127,8 @@ def update_entry(eid: int, body: EntryPatch, conn=Depends(dep_db)):
             check_time(fields[k])
     if "category_id" in fields:
         node = conn.execute("SELECT * FROM categories WHERE id=?", (fields["category_id"],)).fetchone()
-        if node is None or node["level"] != 3:
-            raise HTTPException(400, "记录需挂在第 3 级标签上")
+        if node is None:
+            raise HTTPException(404, "分类不存在")  # v3.2：编辑同样允许任意层级
     if not fields:
         raise HTTPException(400, "无可更新字段")
     sets = ", ".join(f"{k}=?" for k in fields)

@@ -36,7 +36,9 @@ function buildComposer(root, dateStr, onSaved) {
   const $ = s => box.querySelector(s);
   const st = { l1: null, l2: null, l3: null, dur: 0, editingId: null };
   const curDur = () => parseDur($('#dur').value) || st.dur;
-  const syncSave = () => { $('#save').disabled = !(st.l3 && curDur()); };
+  // v3.2：只要选到一级即可保存（睡眠等不必有三级）；选到的最深层即挂载点
+  const curCat = () => st.l3 || st.l2 || st.l1;
+  const syncSave = () => { $('#save').disabled = !(curCat() && curDur()); };
 
   // ---- 三个可搜索下拉（ss.js） ----
   const ss1 = SearchSelect({
@@ -59,7 +61,7 @@ function buildComposer(root, dateStr, onSaved) {
     getCreateParent: () => st.l1,
   });
   const ss3 = SearchSelect({
-    level: 3, placeholder: '先选二级',
+    level: 3, placeholder: '3️⃣ 三级 · 标签（可跳过）',
     getOptions: () => {
       const l1 = App.tree.find(x => x.id === st.l1), l2 = l1 && (l1.children || []).find(x => x.id === st.l2);
       return l2 ? (l2.children || []).map(c => ({ id: c.id, name: c.name, icon: c.icon || l2.icon, text: c.name, path: [l1.name, l2.name, c.name] })) : [];
@@ -82,21 +84,28 @@ function buildComposer(root, dateStr, onSaved) {
       p.className = 'tag-pill';
       p.style.color = t.color;
       p.innerHTML = `<span>${t.icon || '🏷'}</span><span style="color:var(--text)">${esc(t.name)}</span><span class="dim">${esc(t.root_name)} › ${esc(t.parent_name)}</span>`;
-      p.onclick = () => fillFromTagId(t.id);
+      p.onclick = () => fillFromCatId(t.id);
       r.append(p);
     }
   }).catch(() => {});
 
-  // 按三级标签 id 反查并填好三列（recent pill / 编辑回填共用）
-  function fillFromTagId(id) {
-    const l1 = App.tree.find(a => (a.children || []).some(b => (b.children || []).some(c => c.id === id)));
-    if (!l1) return;
-    const l2 = l1.children.find(b => b.children.some(c => c.id === id));
-    st.l1 = l1.id; st.l2 = l2.id; st.l3 = id;
-    ss1.setValue(l1.id); ss1.refresh();
-    ss2.enable(true); ss2.setValue(l2.id); ss2.refresh();
-    ss3.enable(true); ss3.setValue(id); ss3.refresh();
-    syncSave();
+  // 按分类 id 逐级回填三列（记录可挂 1/2/3 任一级；recent pill / 编辑回填共用）
+  function fillFromCatId(id) {
+    st.l1 = st.l2 = st.l3 = null;
+    ss1.setValue(null); ss2.enable(false); ss3.enable(false);
+    const l1 = App.tree.find(a => a.id === id);
+    if (l1) { st.l1 = l1.id; ss1.setValue(l1.id); ss1.refresh(); syncSave(); return; }
+    let p2 = null, l2 = null;
+    for (const a of App.tree) { const c = (a.children || []).find(b => b.id === id); if (c) { p2 = a; l2 = c; break; } }
+    if (l2) { st.l1 = p2.id; st.l2 = l2.id; ss1.setValue(p2.id); ss1.refresh();
+      ss2.enable(true); ss2.setValue(l2.id); ss2.refresh(); syncSave(); return; }
+    for (const a of App.tree) for (const b of (a.children || [])) {
+      const c = (b.children || []).find(x => x.id === id);
+      if (c) { st.l1 = a.id; st.l2 = b.id; st.l3 = c.id;
+        ss1.setValue(a.id); ss1.refresh();
+        ss2.enable(true); ss2.setValue(b.id); ss2.refresh();
+        ss3.enable(true); ss3.setValue(c.id); ss3.refresh(); syncSave(); return; }
+    }
   }
 
   // ---- 时长：芯片/清零/手输全部联动保存按钮（修复"按钮不亮"） ----
@@ -116,15 +125,15 @@ function buildComposer(root, dateStr, onSaved) {
   const save = async () => {
     const dur = curDur();
     if (!dur) return toast('请先填写时长');
-    if (!st.l3) return toast('请选到第三级标签');
+    if (!curCat()) return toast('请至少选择一级分类');
     const body = {
       date: dateStr, duration_min: dur,
       start_time: $('#t1').value || null, end_time: $('#t2').value || null,
       note: $('#note').value.trim() || null,
     };
     try {
-      if (st.editingId) await api.patch('/api/entries/' + st.editingId, { ...body, category_id: st.l3 });
-      else await api.post('/api/entries', { ...body, category_id: st.l3 });
+      if (st.editingId) await api.patch('/api/entries/' + st.editingId, { ...body, category_id: curCat() });
+      else await api.post('/api/entries', { ...body, category_id: curCat() });
       toast(st.editingId ? '已更新 ✓' : '记录成功 ✓');
       onSaved(); // 重渲染后录入器整体回到初始态，可直接录下一条
     } catch (err) { toast('保存失败：' + err.message); }
@@ -138,7 +147,7 @@ function buildComposer(root, dateStr, onSaved) {
     st.dur = e.duration_min; syncDur();
     $('#t1').value = e.start_time || ''; $('#t2').value = e.end_time || '';
     $('#note').value = e.note || '';
-    fillFromTagId(e.category_id);
+    fillFromCatId(e.category_id);
     box.querySelector('h2').textContent = '编辑记录（改完点保存）';
     box.scrollIntoView({ behavior: 'smooth' });
   };

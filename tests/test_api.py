@@ -116,8 +116,8 @@ def test_validation_errors(client):
     assert client.post("/api/entries", json={"date": "2026-09-01", "category_id": tid, "duration_min": 0}).status_code == 422
     tree = client.get("/api/categories").json()
     l2 = find_node(find_node(tree, "工作")["children"], "项目工作")
-    # 必须挂三级
-    assert client.post("/api/entries", json={"date": "2026-09-01", "category_id": l2["id"], "duration_min": 10}).status_code == 400
+    # v3.2：允许挂任意层级（l2 直挂合法）
+    assert client.post("/api/entries", json={"date": "2026-09-01", "category_id": l2["id"], "duration_min": 10}).status_code == 200
 
 
 # ---------- 每日页（日内状态转变序列，需求 v3-R2） ----------
@@ -250,3 +250,26 @@ def test_delete_subtree_with_entries(client):
     assert client.get("/api/days/2026-09-05").json()["entries"] == []
     # 兄弟分类完好
     assert "娱乐" in names
+
+
+def test_entry_on_any_level(client):
+    """v3.2：记录可挂在 1/2/3 任一级（睡眠等只选一级）。"""
+    tree = client.get("/api/categories").json()
+    l1 = find_node(tree, "健康运动")
+    l2 = find_node(l1["children"], "睡眠")
+    # 一级
+    e1 = client.post("/api/entries", json={"date": "2026-09-06", "category_id": l1["id"], "duration_min": 420}).json()
+    assert e1["path"] == ["健康运动"]
+    # 二级
+    e2 = client.post("/api/entries", json={"date": "2026-09-06", "category_id": l2["id"], "duration_min": 60}).json()
+    assert e2["path"] == ["健康运动", "睡眠"]
+    # 编辑改到一级也允许
+    r = client.patch(f"/api/entries/{e2['id']}", json={"category_id": l1["id"]})
+    assert r.json()["path"] == ["健康运动"]
+    # 统计与最近使用包含非三级记录
+    sb = client.get("/api/stats/sunburst?start=2026-09-06&end=2026-09-06").json()
+    assert {n["name"]: n["value"] for n in sb["data"]}["健康运动"] == 480
+    recent = client.get("/api/categories/recent").json()
+    assert any(x["id"] == l1["id"] for x in recent)
+    # 日详情正常
+    assert len(client.get("/api/days/2026-09-06").json()["entries"]) == 2

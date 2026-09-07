@@ -38,14 +38,15 @@ def get_categories(conn=Depends(dep_db)):
 
 @router.get("/recent")
 def recent_tags(limit: int = Query(default=12, ge=1, le=30), conn=Depends(dep_db)):
-    """近 60 天用过的三级标签，按最近使用排序（记录页快捷选择）。"""
+    """近 60 天用过的分类（v3.2：记录可挂 1/2/3 任一级，各级都进最近）。"""
     rows = conn.execute(
-        """SELECT c.id, c.name, c.icon, c.color, p.name AS parent_name, r.name AS root_name,
+        """SELECT c.id, c.name, c.icon, c.color,
+                  COALESCE(p.name, '') AS parent_name, COALESCE(r.name, '') AS root_name,
                   MAX(e.date) AS last_used
            FROM entries e JOIN categories c ON e.category_id = c.id
-           JOIN categories p ON c.parent_id = p.id
-           JOIN categories r ON p.parent_id = r.id
-           WHERE c.level = 3 AND e.date >= date('now', '-60 day')
+           LEFT JOIN categories p ON c.parent_id = p.id
+           LEFT JOIN categories r ON p.parent_id = r.id
+           WHERE e.date >= date('now', '-60 day')
            GROUP BY c.id ORDER BY last_used DESC LIMIT ?""",
         (limit,),
     ).fetchall()
