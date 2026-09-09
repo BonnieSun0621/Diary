@@ -5,6 +5,17 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# 数据目录：开发态在项目 data/；打包后在 ~/Library/Application Support/Diary（各用户隔离）
+def _default_data_dir() -> Path:
+    app_support = Path.home() / "Library" / "Application Support" / "Diary"
+    try:
+        app_support.mkdir(parents=True, exist_ok=True)
+        return app_support
+    except OSError:
+        return BASE_DIR / "data"   # 打包/权限异常兜底
+
+DATA_DIR = Path(os.environ.get("DIARY_DATA_DIR", str(_default_data_dir())))
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS categories (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,7 +49,7 @@ CREATE INDEX IF NOT EXISTS idx_entries_cat ON entries(category_id);
 
 
 def db_path() -> Path:
-    return Path(os.environ.get("DIARY_DB", str(BASE_DIR / "data" / "diary.db")))
+    return Path(os.environ.get("DIARY_DB", str(DATA_DIR / "diary.db")))
 
 
 def connect() -> sqlite3.Connection:

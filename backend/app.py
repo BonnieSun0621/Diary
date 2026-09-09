@@ -41,6 +41,14 @@ app.include_router(entries.router)
 app.include_router(stats.router)
 app.include_router(backup.router)
 
+from pathlib import Path
+import sys
+
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
-app.mount("/", StaticFiles(directory=database.BASE_DIR / "frontend", html=True), name="frontend")
+# 前端资源：开发态在项目 frontend/；PyInstaller 打包后在 sys._MEIPASS/frontend
+if getattr(sys, "frozen", False):
+    _frontend_dir = Path(sys._MEIPASS) / "frontend"
+else:
+    _frontend_dir = database.BASE_DIR / "frontend"
+app.mount("/", StaticFiles(directory=_frontend_dir, html=True), name="frontend")
