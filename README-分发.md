@@ -17,5 +17,19 @@
 - 彻底退出：命令行 `pkill -f diary-server`，或重启电脑
 
 ## 系统要求
-- macOS 12 及以上（Apple Silicon / Intel 均可，打包机为 Apple Silicon）
+- macOS 12 及以上
 - 无需安装 Python 或任何依赖
+
+## 关于 Apple Silicon / Intel
+- `Diary-macOS.zip` 默认在 **Apple Silicon (M 系列)** 机器上打包，**只能在这类 Mac 上运行**
+- **Intel Mac** 用户请在 Intel 机器上自行打包一次（一次性操作，5 分钟）：
+  1. Intel Mac 上安装 Python 3.11+（官网 python.org 下载安装器即可）
+  2. 终端执行：
+     ```bash
+     git clone <项目仓库地址> diary && cd diary
+     python3 -m venv .venv && source .venv/bin/activate
+     pip install -r requirements.txt
+     ./build_app.sh
+     ```
+  3. 产出的 `dist/Diary-macOS.zip` 即为 Intel 版，发给 Intel 用户使用
+- 判断自己 Mac 是哪种芯片：左上角  → 关于本机 →「芯片」显示 Apple M 系列即为 Silicon，显示 Intel 即为 Intel
