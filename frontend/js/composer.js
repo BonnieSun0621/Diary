@@ -43,7 +43,7 @@ function buildComposer(root, dateStr, onSaved) {
   // ---- 三个可搜索下拉（ss.js） ----
   const ss1 = SearchSelect({
     level: 1, placeholder: '1️⃣ 一级 · 领域',
-    getOptions: () => App.tree.map(n => ({ id: n.id, name: n.name, icon: n.icon, text: n.name, path: [n.name] })),
+    getOptions: () => App.tree.map(n => ({ id: n.id, name: n.name, text: n.name, path: [n.name] })),
     onPick: id => {
       st.l1 = id; st.l2 = st.l3 = null;
       ss2.enable(id != null);   // null = 输入了未确认内容，级联整体复位

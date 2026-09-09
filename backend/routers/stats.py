@@ -14,6 +14,15 @@ def hhmm2min(t: str) -> int:
     return int(h) * 60 + int(m)
 
 
+import re as _re
+_EMOJI_RE = _re.compile(
+    "[\U0001F000-\U0001FAFF\U00002600-\U000027BF\U0001F1E6-\U0001F1FF\u2190-\u21FF\u2B00-\u2BFF\uFE0F\u200D]"
+)
+def strip_emoji(name: str) -> str:
+    """统计口径：剥离名称中的 emoji 与零宽连接符，只按文字聚合（v3.7）。"""
+    return _EMOJI_RE.sub('', name).strip()
+
+
 def dep_db():
     conn = connect()
     try:
@@ -65,7 +74,7 @@ def sunburst(start: str = Query(...), end: str = Query(...), conn=Depends(dep_db
         for depth, node in enumerate(chain, start=1):
             if node["id"] not in roots:
                 roots[node["id"]] = {
-                    "id": node["id"], "name": node["name"], "icon": node["icon"],
+                    "id": node["id"], "name": strip_emoji(node["name"]), "icon": node["icon"],
                     "value": 0, "children": {}, "parent": acc,
                     "itemStyle": {"color": _hex_alpha(node["color"], level_alphas[depth])},
                 }
@@ -121,7 +130,7 @@ def trend(start: str = Query(...), end: str = Query(...),
                 key = f"{cur:%m-%d} {m // 60:02d}:00"
                 buckets.setdefault(key, {})
                 buckets[key][root["id"]] = buckets[key].get(root["id"], 0) + 1
-                root_names[root["id"]] = (root["name"], root["color"])
+                root_names[root["id"]] = (strip_emoji(root["name"]), root["color"])
         labels = sorted(buckets)
         series = [
             {"name": root_names[cid][0], "color": root_names[cid][1],
@@ -139,7 +148,7 @@ def trend(start: str = Query(...), end: str = Query(...),
         root = _root(cats, r["category_id"])
         buckets.setdefault(key, {})
         buckets[key][root["id"]] = buckets[key].get(root["id"], 0) + r["total"]
-        root_names[root["id"]] = (root["name"], root["color"])
+        root_names[root["id"]] = (strip_emoji(root["name"]), root["color"])
     labels = sorted(buckets)
     series = [
         {"name": root_names[cid][0], "color": root_names[cid][1],

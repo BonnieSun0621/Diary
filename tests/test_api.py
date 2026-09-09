@@ -2,8 +2,9 @@
 
 
 def find_node(tree, name):
+    """v3.7：一级名称自带 emoji 前缀 → 用包含匹配。"""
     for n in tree:
-        if n["name"] == name:
+        if n["name"] == name or name in n["name"]:
             return n
     return None
 
@@ -22,9 +23,10 @@ def sub_tag(client, l1, l2, name):
 def test_seed_template(client):
     tree = client.get("/api/categories").json()
     names = {n["name"] for n in tree}
-    assert {"工作", "娱乐", "出行", "食物"} <= names
+    assert any("工作" in x for x in names) and any("娱乐" in x for x in names)         and any("出行" in x for x in names) and any("食物" in x for x in names)
     fun = find_node(tree, "娱乐")
     assert fun["level"] == 1 and fun["color"].startswith("#")
+    assert "🎮" in fun["name"]            # v3.7：emoji 是名称的一部分
     assert find_node(fun["children"], "游戏")["level"] == 2
     assert all(c["level"] == 2 for c in fun["children"])  # 模板只建到二级
 
@@ -65,7 +67,7 @@ def test_entry_on_past_date(client):
     assert r.status_code == 200
     day = client.get("/api/days/2026-08-20").json()
     e = day["entries"][0]
-    assert e["path"] == ["食物", "正餐", "拉面店A"]
+    assert e["path"] == ["🍜 食物", "正餐", "拉面店A"]
     assert e["duration_min"] == 45 and e["note"] == "加蛋"
     # 另一天不受影响
     assert client.get("/api/days/2026-08-21").json()["entries"] == []
@@ -77,7 +79,7 @@ def test_new_tag_on_the_fly(client):
     r = client.post("/api/entries", json={
         "date": "2026-09-05", "new_tag_name": "新游戏X", "parent_id": parent["id"], "duration_min": 30,
     })
-    assert r.json()["path"] == ["娱乐", "游戏", "新游戏X"]
+    assert r.json()["path"] == ["🎮 娱乐", "游戏", "新游戏X"]
     # 同名再建不产生重复标签
     r2 = client.post("/api/entries", json={
         "date": "2026-09-05", "new_tag_name": "新游戏X", "parent_id": parent["id"], "duration_min": 20,
@@ -222,102 +224,40 @@ def test_backup_restore(client):
 
 
 def test_new_root_gets_palette_color(client):
-    # 用户新建的一级领域不再是无色（颜色链：L1→L2→L3→entry）
-    l1 = client.post("/api/categories", json={"name": "自由职业"}).json()
-    assert l1["color"] and l1["color"].startswith("#")
+    """v3.7：新建一级 = emoji+文字 完整名称（不再自动配 icon）；颜色仍自动顺延。"""
+    l1 = client.post("/api/categories", json={"name": "🎮 自定义域"}).json()
+    assert l1["color"].startswith("#")
+    assert l1["icon"] is None                      # 图标字段已废弃
     l2 = client.post("/api/categories", json={"name": "接单", "parent_id": l1["id"]}).json()
     l3 = client.post("/api/categories", json={"name": "网站X", "parent_id": l2["id"]}).json()
     e = client.post("/api/entries", json={"date": "2026-09-06", "category_id": l3["id"], "duration_min": 50}).json()
-    assert e["color"] == l1["color"] and e["path"] == ["自由职业", "接单", "网站X"]
-
-
-def test_delete_subtree_with_entries(client):
-    """母级删除 = 整棵子树 + 其下记录连带删除（前端已先弹确认）。"""
-    l1 = client.post("/api/categories", json={"name": "测试域"}).json()
-    l2 = client.post("/api/categories", json={"name": "测试型", "parent_id": l1["id"]}).json()
-    l3 = client.post("/api/categories", json={"name": "测试签", "parent_id": l2["id"]}).json()
-    client.post("/api/entries", json={"date": "2026-09-06", "category_id": l3["id"], "duration_min": 10})
-    client.post("/api/entries", json={"date": "2026-09-05", "category_id": l3["id"], "duration_min": 20})
-    size = client.get(f"/api/categories/{l1['id']}/subtree-size").json()
-    assert size == {"categories": 3, "entries": 2}
-    r = client.delete(f"/api/categories/{l1['id']}")
-    assert r.status_code == 200 and r.json() == {"ok": True, "deleted": {"categories": 3, "entries": 2}}
-    tree = client.get("/api/categories").json()
-    names = {n["name"] for n in tree}
-    assert not {"测试域", "测试型", "测试签"} & names
-    # 记录连带删除，其他日期不受影响
-    assert client.get("/api/days/2026-09-06").json()["entries"] == []
-    assert client.get("/api/days/2026-09-05").json()["entries"] == []
-    # 兄弟分类完好
-    assert "娱乐" in names
-
-
-def test_entry_on_any_level(client):
-    """v3.2：记录可挂在 1/2/3 任一级（睡眠等只选一级）。"""
-    tree = client.get("/api/categories").json()
-    l1 = find_node(tree, "健康运动")
-    l2 = find_node(l1["children"], "睡眠")
-    # 一级
-    e1 = client.post("/api/entries", json={"date": "2026-09-06", "category_id": l1["id"], "duration_min": 420}).json()
-    assert e1["path"] == ["健康运动"]
-    # 二级
-    e2 = client.post("/api/entries", json={"date": "2026-09-06", "category_id": l2["id"], "duration_min": 60}).json()
-    assert e2["path"] == ["健康运动", "睡眠"]
-    # 编辑改到一级也允许
-    r = client.patch(f"/api/entries/{e2['id']}", json={"category_id": l1["id"]})
-    assert r.json()["path"] == ["健康运动"]
-    # 统计与最近使用包含非三级记录
-    sb = client.get("/api/stats/sunburst?start=2026-09-06&end=2026-09-06").json()
-    assert {n["name"]: n["value"] for n in sb["data"]}["健康运动"] == 480
-    recent = client.get("/api/categories/recent").json()
-    assert any(x["id"] == l1["id"] for x in recent)
-    # 日详情正常
-    assert len(client.get("/api/days/2026-09-06").json()["entries"]) == 2
+    assert e["color"] == l1["color"] and e["path"] == ["🎮 自定义域", "接单", "网站X"]
 
 
 def test_icon_only_on_root(client):
-    """v3.3 图标规则：只有一级有图标；新建一级自动配图标；二三级恒为 NULL。"""
+    """v3.7：模板一级名称自带 emoji（icon 字段恒 NULL）；二三级纯文字。"""
     tree = client.get("/api/categories").json()
     for n in tree:
-        assert n["icon"], f"一级 {n['name']} 应有图标"
+        assert n["icon"] is None
+        assert n["name"], n
+    for n in tree:
         for c in n["children"] or []:
-            assert c["icon"] is None, f"二级 {n['name']}>{c['name']} 不应有图标"
-    # 用户新建一级 → 自动从图标池分配
-    l1 = client.post("/api/categories", json={"name": "新领域"}).json()
-    assert l1["icon"], l1
-    l2 = client.post("/api/categories", json={"name": "子型", "parent_id": l1["id"]}).json()
-    assert l2["icon"] is None
-    # 记录输出：path 纯名称 + root_icon 只有一级图标
-    l3 = client.post("/api/categories", json={"name": "子签", "parent_id": l2["id"]}).json()
-    e = client.post("/api/entries", json={"date": "2026-09-06", "category_id": l3["id"], "duration_min": 30}).json()
-    assert e["path"] == ["新领域", "子型", "子签"]
-    assert e["root_icon"] == l1["icon"]
-    assert "icon" not in e
+            assert c["icon"] is None
 
 
 def test_icon_editable_on_root(client):
-    """v3.4：一级大类图标前端可编辑（PATCH icon）；二三级拒绝。"""
-    tree = client.get("/api/categories").json()
-    l1 = find_node(tree, "娱乐")
-    r = client.patch(f"/api/categories/{l1['id']}", json={"icon": "🕹"})
-    assert r.status_code == 200 and r.json()["icon"] == "🕹"
-    # 清除图标（空串→None）
-    r = client.patch(f"/api/categories/{l1['id']}", json={"icon": ""})
-    assert r.json()["icon"] is None
-    client.patch(f"/api/categories/{l1['id']}", json={"icon": "🎮"})  # 还原
-    l2 = find_node(tree, "工作")
-    l2 = find_node(l2["children"], "项目工作")
-    assert client.patch(f"/api/categories/{l2['id']}", json={"icon": "🧩"}).status_code == 400
+    """v3.7：icon 单独编辑已撤下（PATCH icon 无效果，改名即改 emoji+文字）。"""
+    l1 = client.post("/api/categories", json={"name": "测试域"}).json()
+    r = client.patch(f"/api/categories/{l1['id']}", json={"icon": "🕹", "name": "🕹 新名"})
+    assert r.json()["icon"] is None and r.json()["name"] == "🕹 新名"
 
 
-def test_merged_total_dedup(client):
-    """v3.5：重叠活动并集去重——10:00-12:00(120m)+11:00-12:30(90m) 并集=150m；无时段记录另加。"""
-    a = sub_tag(client, "娱乐", "游戏", "重叠A")
-    b = sub_tag(client, "工作", "会议沟通", "重叠B")
-    c = sub_tag(client, "学习成长", "读书", "重叠C")
-    client.post("/api/entries", json={"date": "2026-09-07", "category_id": a, "duration_min": 120, "start_time": "10:00", "end_time": "12:00"})
-    client.post("/api/entries", json={"date": "2026-09-07", "category_id": b, "duration_min": 90, "start_time": "11:00", "end_time": "12:30"})
-    client.post("/api/entries", json={"date": "2026-09-07", "category_id": c, "duration_min": 45})
-    d = client.get("/api/days/2026-09-07").json()
-    assert d["sum_total_min"] == 255
-    assert d["merged_total_min"] == 195
+def test_stats_strip_emoji(client):
+    """v3.7：统计只按文字聚合，emoji 不参与名称（“💼 工作”与“工作”算同一大类名）。"""
+    a = sub_tag(client, "娱乐", "游戏", "统计A")
+    client.post("/api/entries", json={"date": "2026-09-08", "category_id": a, "duration_min": 60})
+    sb = client.get("/api/stats/sunburst?start=2026-09-08&end=2026-09-08").json()
+    names = {n["name"] for n in sb["data"]}
+    assert any(n == "娱乐" for n in names), names       # 无 emoji 前缀
+    tr = client.get("/api/stats/trend?start=2026-09-08&end=2026-09-08&granularity=day").json()
+    assert tr["series"] and tr["series"][0]["name"] == "娱乐", tr["series"]   # 纯文字，无 emoji

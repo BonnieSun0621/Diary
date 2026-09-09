@@ -37,7 +37,7 @@ async function renderSettings(root) {
     row.innerHTML = `
       ${arrow}
       <span class="cicon" style="background:${n.color}"></span>
-      <span>${n.level === 1 ? `<button class="mini" title="icon" style="font-size:16px;opacity:1">${n.icon || '➕'}</button> ` : ''}<b>${esc(n.name)}</b> <span class="dim">L${n.level}${kids.length ? ` · ${kids.length} 子级` : ''}</span></span>
+      <span><b>${esc(n.name)}</b> <span class="dim">L${n.level}${kids.length ? ` · ${kids.length} 子级` : ''}</span></span>
       <div class="spacer"></div>
       ${n.level < 3 ? '<button class="mini" title="add">＋子级</button>' : ''}
       <button class="mini" title="rename">✏️</button>
@@ -54,12 +54,6 @@ async function renderSettings(root) {
         renderSettings.opened.add(n.id);
       }
     }));
-    row.querySelector('[title=icon]')?.addEventListener('click', () => {
-      pickEmoji(n.icon || '', async emoji => {
-        try { await api.patch('/api/categories/' + n.id, { icon: emoji }); reload(); }
-        catch (e) { toast(e.message); }
-      });
-    });
     row.querySelector('[title=rename]').onclick = () => act(async () => {
       const name = prompt('新名称：', n.name);
       if (name?.trim() && name !== n.name) await api.patch('/api/categories/' + n.id, { name: name.trim() });

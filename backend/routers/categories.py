@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ..database import connect
 from ..helpers import CategoryIn, CategoryPatch, MergeIn, load_cats
-from ..seed import EXTRA_PALETTE, ICON_POOL
+from ..seed import EXTRA_PALETTE
 
 router = APIRouter(prefix="/api/categories", tags=["categories"])
 
@@ -65,10 +65,10 @@ def create_category(body: CategoryIn, conn=Depends(dep_db)):
         if not color:  # 用户新建的一级领域：按数量顺延取备用色
             n = conn.execute("SELECT COUNT(*) c FROM categories WHERE level=1").fetchone()["c"]
             color = EXTRA_PALETTE[n % len(EXTRA_PALETTE)]
-        if not icon:   # v3.3：只有大类有图标，新建时从图标池自动分配
-            icon = ICON_POOL[n % len(ICON_POOL)]
+        # v3.7：emoji+文字是完整名称的一部分（用户输入什么就是什么），不再自动配图标
+        icon = None
     else:
-        icon = None  # v3.3：二三级不存图标
+        icon = None  # 二三级同样不需要图标字段
         parent = conn.execute(
             "SELECT * FROM categories WHERE id=?", (body.parent_id,)
         ).fetchone()
@@ -105,11 +105,9 @@ def rename_category(cid: int, body: CategoryPatch, conn=Depends(dep_db)):
     fields = body.model_dump(exclude_unset=True)
     if "name" in fields:
         fields["name"] = fields["name"].strip()
-    if "icon" in fields:
-        if node["level"] != 1:
-            raise HTTPException(400, "只有一级大类可设置图标")  # v3.3 规则
-        if fields["icon"] is not None:
-            fields["icon"] = fields["icon"].strip() or None
+    fields.pop("icon", None)   # v3.7：图标并入名称，不再单独编辑
+    if "name" in fields:
+        fields["name"] = fields["name"].strip()
     if not fields:
         raise HTTPException(400, "无可更新字段")
     sets = ", ".join(f"{k}=?" for k in fields)
