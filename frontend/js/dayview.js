@@ -115,7 +115,7 @@ async function renderDayView(root, dateStr) {
   const list = document.createElement('div');
   list.className = 'card';
   const total = day.merged_total_min ?? day.entries.reduce((s, e) => s + e.duration_min, 0);
-  list.innerHTML = `<h2>活动记录 <span class="dim">实际投入 ${fmtDur(total)}${day.merged_total_min != null && day.merged_total_min !== day.sum_total_min ? `（累加 ${fmtDur(day.sum_total_min)}，已去重）` : ''}</span></h2>`;
+  list.innerHTML = `<h2>活动记录 · 时长 ${fmtDur(total)}</h2>`;
   list.append(renderTimeline(day.entries));
   const ul = document.createElement('div');
   list.append(ul);

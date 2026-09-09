@@ -20,14 +20,28 @@ function renderTimeline(entries) {
       blk.style.width = ((b - a) / 1440 * 100) + '%';
       blk.style.setProperty('--c', e.color || '#888');
       track.append(blk);
-      // 统一悬浮交互（全局 Tooltip 组件）
-      attachTip(blk, () => {
-        const dur = `${e.start_time}–${e.end_time} · ${fmtDur(e.duration_min)}`;
-        return `<b>${esc(e.path[e.path.length - 1])}</b>
-          <span class="tip-path">${esc(e.path.join(' › '))}</span>
-          <span class="tip-time">${dur}</span>
-          ${e.note ? `<i>“${esc(e.note)}”</i>` : ''}`;
-      });
+      // 复刻旭日图交互：hover 自身高亮、其余色块弱化（dim 类）、信息卡出现在块右下角
+      const tip = document.createElement('span');
+      tip.className = 'tip tl-tip';
+      tip.innerHTML = `<b>${esc(e.path[e.path.length - 1])}</b>
+        <span class="tip-path">${esc(e.path.join(' › '))}</span>
+        <span class="tip-time">${e.start_time}–${e.end_time} · ${fmtDur(e.duration_min)}</span>
+        ${e.note ? `<i>“${esc(e.note)}”</i>` : ''}`;
+      box.append(tip);
+      blk.onmouseenter = () => {
+        track.classList.add('dimming');
+        blk.classList.add('hovering');
+        tip.style.display = 'block';
+        // 定位：块右下角（块右端 + 8px，块底缘 + 8px）
+        const bw = box.clientWidth || 1;
+        const rightPx = (b - a) / 1440 * bw + a / 1440 * bw;
+        tip.style.left = Math.min(rightPx + 8, bw - 244) + 'px';
+      };
+      blk.onmouseleave = () => {
+        track.classList.remove('dimming');
+        blk.classList.remove('hovering');
+        tip.style.display = 'none';
+      };
     }
   }
   for (let h = 0; h <= 24; h += 6) {

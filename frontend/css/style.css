@@ -196,6 +196,8 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
   content: ''; position: absolute; inset: 0; border-radius: 7px; pointer-events: none;
   background: linear-gradient(115deg, rgba(255,255,255,.16) 0%, transparent 38%, transparent 62%, rgba(255,255,255,.06) 100%);
 }
+.timeline .track.dimming .blk { filter: brightness(.45) saturate(.4); opacity: .55; }   /* 弱化其他 */
+.timeline .track.dimming .blk.hovering { filter: brightness(1.22) saturate(1.25); opacity: 1; }
 .timeline .blk:hover {
   filter: brightness(1.22) saturate(1.25);   /* 原位提亮+描边，不位移，保持与时间线齐平 */
   box-shadow:
@@ -203,6 +205,10 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
     inset 0 -1px 0 rgba(255,255,255,.12),
     0 0 0 2px rgba(255,255,255,.25), 0 6px 16px rgba(0,0,0,.4);
   z-index: 6;
+}
+.timeline .tl-tip {
+  display: none; position: absolute; top: 52px; left: 0; z-index: 60;   /* 右下角：块底缘(40) + 12px */
+  transition: none;
 }
 .timeline .tip {
   display: none; position: absolute; top: 0; left: 0; z-index: 60;

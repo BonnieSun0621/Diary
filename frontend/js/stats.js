@@ -1,5 +1,16 @@
 // 统计页：旭日图（三级下钻+面包屑）/ 堆叠柱（日周月年）/ 日历热力图（需求 §4-D）
 // 图表主题与 CSS 设计令牌同源（style.css --text-2 等），保证视觉统一
+function hexA(hex, a) {
+  const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+}
+function glassGrad(color) {
+  return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+    { offset: 0,   color: hexA(color, .78) },
+    { offset: .55, color: hexA(color, .48) },
+    { offset: 1,   color: hexA(color, .58) },
+  ]);
+}
 const CHART_T = {
   dim: '#a5a29a', grid: 'rgba(255,255,255,.07)', tipBg: '#1e2026',
   accent: '#A3B899', heatFrom: '#232830', border: '#141519',
@@ -14,7 +25,7 @@ const RANGE_PRESETS = {
 async function renderStats(root) {
   root.innerHTML = '';
   let range = RANGE_PRESETS['近30天']();
-  let gran = 'hour';
+  let gran = 'day';
 
   const ctrl = document.createElement('div');
   ctrl.className = 'card';
@@ -48,15 +59,17 @@ async function renderStats(root) {
     trend.setOption({
       tooltip: { trigger: 'axis', backgroundColor: CHART_T.tipBg, borderColor: 'rgba(255,255,255,.1)',
         textStyle: { color: '#eceae7' },
-        valueFormatter: v => fmtDur(v) },
+        valueFormatter: v => fmtDur(v) + '（' + (v / 60).toFixed(1) + 'h）' },
       legend: { textStyle: { color: CHART_T.dim }, top: 0, icon: 'circle', itemWidth: 8 },
       grid: { left: 48, right: 16, top: 36, bottom: 28 },
       xAxis: { type: 'category', data: tr.labels, axisLabel: { color: CHART_T.dim },
         axisLine: { lineStyle: { color: 'rgba(255,255,255,.1)' } } },
-      yAxis: { type: 'value', name: '分钟', nameTextStyle: { color: CHART_T.dim },
-        axisLabel: { color: CHART_T.dim }, splitLine: { lineStyle: { color: CHART_T.grid } } },
+      yAxis: { type: 'value', name: '小时', nameTextStyle: { color: CHART_T.dim },
+        axisLabel: { color: CHART_T.dim, formatter: v => (v / 60) + 'h' },
+        splitLine: { lineStyle: { color: CHART_T.grid } } },
       series: tr.series.map(x => ({ name: x.name, type: 'bar', stack: 't',
-        itemStyle: { color: x.color, borderRadius: [3, 3, 0, 0] }, barMaxWidth: 42, data: x.data })),
+        itemStyle: { color: glassGrad(x.color), borderRadius: [4, 4, 0, 0],
+          borderColor: hexA(x.color, .85), borderWidth: 1 }, barMaxWidth: 42, data: x.data })),
     }, true);
     const y = +e.slice(0, 4);
     const hm = await api.get('/api/stats/heatmap?year=' + y);
@@ -93,8 +106,8 @@ async function renderStats(root) {
   gbox.className = 'row';
   gbox.style.marginTop = '10px';
   gbox.innerHTML = `<span class="dim">趋势粒度</span>` +
-    ['hour', 'day', 'week', 'month', 'year'].map((g, i) =>
-      `<button class="chip${i === 0 ? ' on' : ''}" data-g="${g}">${['时', '日', '周', '月', '年'][i]}</button>`).join('');
+    ['day', 'week', 'month', 'year'].map((g, i) =>
+      `<button class="chip${i === 0 ? ' on' : ''}" data-g="${g}">${['日', '周', '月', '年'][i]}</button>`).join('');
   ctrl.append(gbox);
   gbox.querySelectorAll('[data-g]').forEach(b => b.onclick = () => {
     gbox.querySelectorAll('.chip').forEach(x => x.classList.remove('on'));

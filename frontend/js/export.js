@@ -46,7 +46,7 @@ async function exportJournalPng(day) {
     ${listHtml}
     <hr class="j-hr">
     ${total ? `<div class="j-sec">时 间 去 向</div>
-      <div class="j-pie"><div id="jpie" style="width:220px;height:220px"></div><div class="j-legend" id="jlegend"></div></div>` : ''}
+      <div class="j-pie"><div id="jpie" style="width:260px;height:260px;flex-shrink:0"></div><div class="j-legend" id="jlegend"></div></div>` : ''}
     ${page.text ? `<hr class="j-hr"><div class="j-sec">今 日 随 想</div><div class="j-text">${esc2(page.text)}</div>` : ''}
     <hr class="j-hr">
     <div style="text-align:center;font-size:12px;opacity:.55;letter-spacing:4px">— 拾光手帐 · ${day.date} —</div>`;
@@ -80,10 +80,12 @@ async function exportJournalPng(day) {
     }
     const colorOf = {};
     for (const l1 of App.tree) colorOf[l1.name] = l1.color;
-    const pie = echarts.init(j.querySelector('#jpie'));
+    const holder = j.querySelector('#jpie');
+    const pie = echarts.init(holder);
     pie.setOption({
+      animation: false,                       /* 截图必须静态 */
       tooltip: { show: false },
-      series: [{ type: 'pie', radius: ['45%', '75%'],
+      series: [{ type: 'pie', radius: ['45%', '75%'], center: ['50%', '50%'], startAngle: 90,
         label: { show: false }, itemStyle: { borderColor: theme === 'light' ? '#f6efe2' : '#2b2823', borderWidth: 2 },
         data: Object.entries(byRoot).filter(([, v]) => v > 0).map(([n, v]) => ({ name: n, value: v, itemStyle: { color: colorOf[n] || '#999' } })) }],
     });
@@ -92,7 +94,14 @@ async function exportJournalPng(day) {
       .sort((a, b) => b[1] - a[1])
       .map(([n, v]) => `<span style="color:${colorOf[n] || '#999'}">●</span> ${n} ${fmtDur(v)}（${Math.round(v / total * 100)}%）`)
       .join('<br>');
-    await new Promise(r => setTimeout(r, 300));
+    pie.resize();
+    await new Promise(r => pie.on('finished', r));   /* 等渲染真正完成 */
+    // canvas → 静态 img：html2canvas 截 canvas 容易截断，转 img 最稳
+    const url = pie.getDataURL({ pixelRatio: 2, backgroundColor: theme === 'light' ? '#f6efe2' : '#2b2823' });
+    const img = document.createElement('img');
+    img.src = url;
+    img.style.cssText = 'width:260px;height:260px;display:block';
+    holder.replaceWith(img);
   }
 
   const canvas = await html2canvas(j, { scale: 2, backgroundColor: null });
