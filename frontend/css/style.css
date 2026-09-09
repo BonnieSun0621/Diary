@@ -1,27 +1,85 @@
-/* 深色底 + 玻璃质感 + 莫兰迪色板
-   设计令牌：8pt 间距网格 / 字号阶梯 / 圆角家族 / 色彩三件套 */
-:root {
-  /* --- 色彩 --- */
-  --bg: #141519;                         /* 底色：低饱和蓝黑 */
-  --bg-tint-1: #1c2027;                  /* 背景渐变·蓝灰 */
-  --bg-tint-2: #201d26;                  /* 背景渐变·灰紫 */
-  --surface-1: rgba(255, 255, 255, .07); /* 主卡片表面 */
-  --surface-2: rgba(255, 255, 255, .04); /* 次卡片表面（更退后） */
+/* ============================================================
+   主题系统（v3.8）：深色(默认) / 墨绿纸 / 暖米纸
+   切换方式：<html data-theme="...">；JS 端 Theme.current() 读取
+   ============================================================ */
+:root, [data-theme="dark"] {
+  --bg: #141519;
+  --bg-tint-1: #1c2027;
+  --bg-tint-2: #201d26;
+  --surface-1: rgba(255, 255, 255, .07);
+  --surface-2: rgba(255, 255, 255, .04);
   --surface-hover: rgba(255, 255, 255, .10);
   --stroke: rgba(255, 255, 255, .10);
-  --stroke-bright: rgba(255, 255, 255, .16); /* 卡片顶部内亮边 */
+  --stroke-bright: rgba(255, 255, 255, .16);
   --text: #eceae7;
-  --text-2: #a5a29a;                     /* 次要文字（≥4.5:1） */
-  --text-3: #7d7a74;                     /* 弱提示 */
+  --text-2: #a5a29a;
+  --text-3: #7d7a74;
   --accent: #A3B899;
   --accent-hover: #b7caad;
   --accent-deep: #8CA37F;
-  --accent-soft: rgba(163, 184, 153, .14); /* 选中态填充 */
+  --accent-soft: rgba(163, 184, 153, .14);
   --accent-ring: rgba(163, 184, 153, .35);
   --danger: #D4A5A5;
+  --tip-bg: #1e2026;
   --shadow-1: 0 1px 2px rgba(0,0,0,.25), 0 4px 14px rgba(0,0,0,.18);
   --shadow-2: 0 2px 6px rgba(0,0,0,.30), 0 14px 34px rgba(0,0,0,.28);
+  --chart-text: #a5a29a;      /* JS 图表读取用（getComputedStyle） */
+  --chart-grid: rgba(255,255,255,.07);
+  --chart-border: #141519;
+}
+[data-theme="inkpaper"] {     /* 墨绿纸：深绿底 + 米白字 */
+  --bg: #16211d;
+  --bg-tint-1: #1d2c26;
+  --bg-tint-2: #1a2a33;
+  --surface-1: rgba(240, 244, 235, .07);
+  --surface-2: rgba(240, 244, 235, .04);
+  --surface-hover: rgba(240, 244, 235, .10);
+  --stroke: rgba(240, 244, 235, .12);
+  --stroke-bright: rgba(240, 244, 235, .18);
+  --text: #eef2ea;
+  --text-2: #a8b3a5;
+  --text-3: #7e8a7c;
+  --accent: #9BC4BC;
+  --accent-hover: #b1d4cd;
+  --accent-deep: #82aca4;
+  --accent-soft: rgba(155, 196, 188, .16);
+  --accent-ring: rgba(155, 196, 188, .38);
+  --tip-bg: #1c2823;
+  --shadow-1: 0 1px 2px rgba(0,0,0,.25), 0 4px 14px rgba(0,0,0,.16);
+  --shadow-2: 0 2px 6px rgba(0,0,0,.28), 0 14px 34px rgba(0,0,0,.25);
+  --chart-text: #a8b3a5;
+  --chart-grid: rgba(240,244,235,.08);
+  --chart-border: #16211d;
+}
+[data-theme="warmpaper"] {    /* 暖米纸：浅色纸感 + 深棕字 */
+  --bg: #f6efe2;
+  --bg-tint-1: #fbf6ec;
+  --bg-tint-2: #f1e7d4;
+  --surface-1: rgba(74, 66, 56, .055);
+  --surface-2: rgba(74, 66, 56, .035);
+  --surface-hover: rgba(74, 66, 56, .09);
+  --stroke: rgba(74, 66, 56, .16);
+  --stroke-bright: rgba(255,255,255,.9);
+  --text: #4a4238;
+  --text-2: #8a7f70;
+  --text-3: #a89c8b;
+  --accent: #7d9471;
+  --accent-hover: #8fa883;
+  --accent-deep: #6a8060;
+  --accent-soft: rgba(125, 148, 113, .16);
+  --accent-ring: rgba(125, 148, 113, .40);
+  --danger: #b26a6a;
+  --tip-bg: #fffdf7;
+  --shadow-1: 0 1px 2px rgba(74,66,56,.12), 0 4px 14px rgba(74,66,56,.10);
+  --shadow-2: 0 2px 6px rgba(74,66,56,.16), 0 14px 34px rgba(74,66,56,.14);
+  --chart-text: #8a7f70;
+  --chart-grid: rgba(74,66,56,.10);
+  --chart-border: #f6efe2;
+}
 
+/* 深色底 + 玻璃质感 + 莫兰迪色板
+   设计令牌：8pt 间距网格 / 字号阶梯 / 圆角家族 / 色彩三件套 */
+:root {
   /* --- 字号阶梯 --- */
   --fs-xs: 12px; --fs-sm: 13px; --fs-md: 15px; --fs-lg: 18px; --fs-xl: 24px; --fs-2xl: 32px;
   /* --- 间距（8pt 网格） --- */
@@ -31,6 +89,7 @@
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { color-scheme: dark; }
+html[data-theme="warmpaper"] { color-scheme: light; }
 body {
   font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
   background: radial-gradient(1100px 760px at 82% -12%, var(--bg-tint-1) 0%, var(--bg) 52%),
@@ -65,7 +124,11 @@ button, input, textarea, select { font: inherit; color: inherit; }
   content: ''; position: absolute; left: -10px; top: 14px; bottom: 14px; width: 3px;
   border-radius: 2px; background: var(--accent);
 }
-#nav .ver { margin-top: auto; font-size: 10px; color: var(--text-3); opacity: .7; }
+#nav .theme-box { margin-top: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.theme-dot { width: 18px; height: 18px; border-radius: 50%; cursor: pointer;
+  border: 2px solid transparent; padding: 0; transition: all .15s; }
+.theme-dot.on { border-color: var(--accent); transform: scale(1.15); }
+#nav .ver { margin-top: 0; font-size: 10px; color: var(--text-3); opacity: .7; }
 
 /* ---------- 布局 ---------- */
 #view { max-width: 980px; margin: 0 auto; padding: var(--sp-5) var(--sp-6) 88px 104px; }
@@ -156,7 +219,7 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
 .picker { position: relative; }
 .picker-pop {
   position: absolute; top: 42px; left: 0; right: 0; max-height: 300px; overflow-y: auto; z-index: 60;
-  background: #1e2026; border: 1px solid var(--stroke); border-radius: 12px; padding: 6px;
+  background: var(--tip-bg); border: 1px solid var(--stroke-bright); border-radius: 12px; padding: 6px;
   box-shadow: 0 18px 40px rgba(0,0,0,.5);
 }
 .picker-pop .grp { font-size: 11px; color: var(--text-2); padding: 6px 10px 2px; }
@@ -213,7 +276,7 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
 .timeline .tip {
   display: none; position: absolute; top: 0; left: 0; z-index: 60;
   width: 232px; box-sizing: border-box;            /* 固定宽度，信息 ≤5 行 */
-  background: #1e2026; border: 1px solid var(--stroke-bright); border-radius: 10px;
+  background: var(--tip-bg); border: 1px solid var(--stroke-bright); border-radius: 10px;
   padding: 8px 12px; font-size: 12px; line-height: 1.55; color: var(--text);
   box-shadow: var(--shadow-2); pointer-events: none;
 }
@@ -231,7 +294,7 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
 .global-tip {
   display: none; position: fixed; z-index: 90;
   width: 232px; box-sizing: border-box;
-  background: #1e2026; border: 1px solid var(--stroke-bright); border-radius: 10px;
+  background: var(--tip-bg); border: 1px solid var(--stroke-bright); border-radius: 10px;
   padding: 8px 12px; font-size: 12px; line-height: 1.55; color: var(--text);
   box-shadow: var(--shadow-2); pointer-events: none;
   opacity: 0; transform: translateY(4px);
@@ -286,7 +349,7 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
 /* ---------- toast ---------- */
 #toast {
   position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(16px);
-  background: #26282f; border: 1px solid var(--stroke); color: var(--text);
+  background: var(--tip-bg); border: 1px solid var(--stroke); color: var(--text);
   padding: 10px 22px; border-radius: var(--r-full); font-size: 14px; opacity: 0;
   pointer-events: none; transition: all .25s cubic-bezier(.2,.8,.3,1); z-index: 99;
   box-shadow: var(--shadow-2);
@@ -314,7 +377,7 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
   padding-top: 16vh; overflow-y: auto;
 }
 .state-pop {
-  background: #1e2026; border: 1px solid var(--stroke); border-radius: 14px;
+  background: var(--tip-bg); border: 1px solid var(--stroke); border-radius: 14px;
   padding: 18px 20px; min-width: 340px; max-width: 560px;
   box-shadow: 0 24px 60px rgba(0,0,0,.55);
   max-height: 68vh; overflow-y: auto;

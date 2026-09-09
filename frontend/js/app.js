@@ -37,6 +37,36 @@ async function route() {
 window.addEventListener('hashchange', route);
 route();
 
+// ============ 主题切换（深色 / 墨绿纸 / 暖米纸） ============
+const THEMES = [
+  { id: 'dark',      name: '深色',   dot: '#141519' },
+  { id: 'inkpaper',  name: '墨绿纸', dot: '#1b2a24' },
+  { id: 'warmpaper', name: '暖米纸', dot: '#f6efe2' },
+];
+function applyTheme(id) {
+  document.documentElement.dataset.theme = id;
+  localStorage.setItem('theme', id);
+  document.querySelectorAll('.theme-dot').forEach(d =>
+    d.classList.toggle('on', d.dataset.t === id));
+}
+function initThemeSwitcher() {
+  const nav = document.getElementById('nav');
+  const box = document.createElement('div');
+  box.className = 'theme-box';
+  for (const t of THEMES) {
+    const b = document.createElement('button');
+    b.className = 'theme-dot';
+    b.dataset.t = t.id;
+    b.title = t.name;
+    b.style.background = t.dot;
+    b.onclick = () => { applyTheme(t.id); route(); };
+    box.append(b);
+  }
+  nav.insertBefore(box, nav.querySelector('.ver'));
+  applyTheme(localStorage.getItem('theme') || 'dark');
+}
+initThemeSwitcher();
+
 // PWA：提示安装到 Dock
 if (window.deferredPromptEvent) installHint();
 window.addEventListener('beforeinstallprompt', e => {

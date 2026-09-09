@@ -71,7 +71,7 @@ function SearchSelect({ level, placeholder, getOptions, onPick, getCreateParent 
   box.enable = on => {
     input.disabled = !on;
     box.classList.toggle('off', !on);
-    input.placeholder = on ? placeholder : '🔒 先选上一级';
+    input.placeholder = on ? placeholder : '先选上一级';
     if (!on) setValue(null);
   };
   return box;

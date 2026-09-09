@@ -27,7 +27,7 @@ function buildComposer(root, dateStr, onSaved) {
     <div class="row" style="margin-top:10px">
       <span class="dim">时段(选填)</span>
       <input type="time" id="t1"> <span class="dim">–</span> <input type="time" id="t2">
-      <button class="chip" id="autoend" title="用时长推出结束时间">⚡自动</button>
+      <button class="chip" id="autoend" title="用时长推出结束时间">自动</button>
       <input type="text" id="note" placeholder="备注…（可留空）" style="flex:1;min-width:160px">
       <div class="spacer"></div>
       <button class="btn primary" id="save">保存 ⏎</button>
@@ -42,7 +42,7 @@ function buildComposer(root, dateStr, onSaved) {
 
   // ---- 三个可搜索下拉（ss.js） ----
   const ss1 = SearchSelect({
-    level: 1, placeholder: '1️⃣ 一级 · 领域',
+    level: 1, placeholder: '一级',
     getOptions: () => App.tree.map(n => ({ id: n.id, name: n.name, text: n.name, path: [n.name] })),
     onPick: id => {
       st.l1 = id; st.l2 = st.l3 = null;
@@ -52,7 +52,7 @@ function buildComposer(root, dateStr, onSaved) {
     },
   });
   const ss2 = SearchSelect({
-    level: 2, placeholder: '先选一级',
+    level: 2, placeholder: '二级',
     getOptions: () => {
       const n = App.tree.find(x => x.id === st.l1);
       return n ? (n.children || []).map(c => ({ id: c.id, name: c.name, text: c.name, path: [n.name, c.name] })) : [];  // v3.3：子级无图标
@@ -61,7 +61,7 @@ function buildComposer(root, dateStr, onSaved) {
     getCreateParent: () => st.l1,
   });
   const ss3 = SearchSelect({
-    level: 3, placeholder: '3️⃣ 三级 · 标签（可跳过）',
+    level: 3, placeholder: '三级（可跳过）',
     getOptions: () => {
       const l1 = App.tree.find(x => x.id === st.l1), l2 = l1 && (l1.children || []).find(x => x.id === st.l2);
       return l2 ? (l2.children || []).map(c => ({ id: c.id, name: c.name, text: c.name, path: [l1.name, l2.name, c.name] })) : [];  // v3.3：子级无图标
