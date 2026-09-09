@@ -114,8 +114,8 @@ async function renderDayView(root, dateStr) {
   // ---- 时间轴 + 活动清单 ----
   const list = document.createElement('div');
   list.className = 'card';
-  const total = day.entries.reduce((s, e) => s + e.duration_min, 0);
-  list.innerHTML = `<h2>活动记录 <span class="dim">共 ${fmtDur(total)}</span></h2>`;
+  const total = day.merged_total_min ?? day.entries.reduce((s, e) => s + e.duration_min, 0);
+  list.innerHTML = `<h2>活动记录 <span class="dim">实际投入 ${fmtDur(total)}${day.merged_total_min != null && day.merged_total_min !== day.sum_total_min ? `（累加 ${fmtDur(day.sum_total_min)}，已去重）` : ''}</span></h2>`;
   list.append(renderTimeline(day.entries));
   const ul = document.createElement('div');
   list.append(ul);
@@ -133,6 +133,11 @@ async function renderDayView(root, dateStr) {
         <button class="mini" title="编辑">✏️</button>
         <button class="mini" title="删除">🗑</button>
       </div>`;
+    attachTip(row.querySelector('.path'), () =>
+      `<b>${esc(e.path[e.path.length - 1])}</b>
+       <span class="tip-path">${esc(e.path.join(' › '))}</span>
+       <span class="tip-time">${e.start_time ? `${e.start_time}–${e.end_time} · ` : ''}${fmtDur(e.duration_min)}</span>
+       ${e.note ? `<i>“${esc(e.note)}”</i>` : ''}`);
     row.querySelector('[title=编辑]').onclick = () => composer.loadEntry(e);
     row.querySelector('[title=删除]').onclick = async () => {
       if (!confirm('删除这条记录？')) return;

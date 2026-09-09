@@ -1,6 +1,11 @@
 """每日页与活动记录：按任意日期读写（今日只是 date=today 的特例）。"""
 import json
 
+
+def hhmm2min(t: str) -> int:
+    h, m = t.split(":")
+    return int(h) * 60 + int(m)
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..database import connect
@@ -48,9 +53,29 @@ def get_day(date: str, conn=Depends(dep_db)):
         }
     else:
         day_page = {"date": date, "text": None, "mood": [], "weather": []}
+    # v3.5：时长改为"区间并集"——重叠活动的重合部分只计一次；无起止时间的记录按时长单独累加
+    intervals = sorted(
+        (hhmm2min(r["start_time"]), hhmm2min(r["end_time"]))
+        for r in rows if r["start_time"] and r["end_time"]
+    )
+    merged, cur = 0, None
+    for a, b in intervals:
+        b = b if b > a else b + 1440          # 跨午夜段
+        if cur is None:
+            cur = [a, b]
+        elif a <= cur[1]:                      # 重合/相邻：并入
+            cur[1] = max(cur[1], b)
+        else:
+            merged += cur[1] - cur[0]
+            cur = [a, b]
+    if cur:
+        merged += cur[1] - cur[0]
+    un_timed = sum(r["duration_min"] for r in rows if not (r["start_time"] and r["end_time"]))
     return {
         "date": date,
         "day_page": day_page,
+        "merged_total_min": merged + un_timed,   # 去重后的实际投入时长
+        "sum_total_min": sum(r["duration_min"] for r in rows),  # 旧口径（累加）留作参考
         "entries": [entry_out(cats, r) for r in rows],
     }
 

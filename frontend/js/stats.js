@@ -14,7 +14,7 @@ const RANGE_PRESETS = {
 async function renderStats(root) {
   root.innerHTML = '';
   let range = RANGE_PRESETS['近30天']();
-  let gran = 'day';
+  let gran = 'hour';
 
   const ctrl = document.createElement('div');
   ctrl.className = 'card';
@@ -93,8 +93,8 @@ async function renderStats(root) {
   gbox.className = 'row';
   gbox.style.marginTop = '10px';
   gbox.innerHTML = `<span class="dim">趋势粒度</span>` +
-    ['day', 'week', 'month', 'year'].map((g, i) =>
-      `<button class="chip${i === 0 ? ' on' : ''}" data-g="${g}">${['日', '周', '月', '年'][i]}</button>`).join('');
+    ['hour', 'day', 'week', 'month', 'year'].map((g, i) =>
+      `<button class="chip${i === 0 ? ' on' : ''}" data-g="${g}">${['时', '日', '周', '月', '年'][i]}</button>`).join('');
   ctrl.append(gbox);
   gbox.querySelectorAll('[data-g]').forEach(b => b.onclick = () => {
     gbox.querySelectorAll('.chip').forEach(x => x.classList.remove('on'));

@@ -20,26 +20,14 @@ function renderTimeline(entries) {
       blk.style.width = ((b - a) / 1440 * 100) + '%';
       blk.style.setProperty('--c', e.color || '#888');
       track.append(blk);
-      // 信息卡：固定 232px，挂在 box 层（不被轨道 overflow 裁切），悬停时按块位置定位
-      const tip = document.createElement('span');
-      tip.className = 'tip';
-      const dur = `${e.start_time}–${e.end_time} · ${fmtDur(e.duration_min)}`;
-      tip.innerHTML = `<b>${esc(e.path[e.path.length - 1])}</b>
-        <span class="tip-path">${esc(e.path.join(' › '))}</span>
-        <span class="tip-time">${dur}</span>
-        ${e.note ? `<i>“${esc(e.note)}”</i>` : ''}`;
-      box.append(tip);
-      blk.onmouseenter = () => {
-        const bw = box.clientWidth || 1;
-        const leftPct = a / 1440 * 100, widthPct = (b - a) / 1440 * 100;
-        const centerPct = leftPct + widthPct / 2;
-        const TW = 232;  // 卡固定宽
-        let L = centerPct / 100 * bw - TW / 2;   // 以块中心居中
-        L = Math.max(0, Math.min(L, bw - TW));   // 夹在轨道内，两端不溢出
-        tip.style.left = L + 'px';
-        tip.style.display = 'block';
-      };
-      blk.onmouseleave = () => { tip.style.display = 'none'; };
+      // 统一悬浮交互（全局 Tooltip 组件）
+      attachTip(blk, () => {
+        const dur = `${e.start_time}–${e.end_time} · ${fmtDur(e.duration_min)}`;
+        return `<b>${esc(e.path[e.path.length - 1])}</b>
+          <span class="tip-path">${esc(e.path.join(' › '))}</span>
+          <span class="tip-time">${dur}</span>
+          ${e.note ? `<i>“${esc(e.note)}”</i>` : ''}`;
+      });
     }
   }
   for (let h = 0; h <= 24; h += 6) {

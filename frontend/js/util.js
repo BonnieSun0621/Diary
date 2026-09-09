@@ -77,6 +77,31 @@ function pickEmoji(current, onDone) {
   function close() { backdrop.remove(); }
 }
 
+// 全局统一悬浮提示：固定宽 232px、≤5 行、淡入上浮 150ms（与统计页 tooltip 同一质感）
+// 用法：attachTip(el, () => htmlString)  —— 悬停时计算并展示，移开即收起
+let _tipEl = null;
+function attachTip(el, contentFn) {
+  el.addEventListener('mouseenter', () => {
+    if (!_tipEl) {
+      _tipEl = document.createElement('div');
+      _tipEl.className = 'global-tip';
+      document.body.append(_tipEl);
+    }
+    _tipEl.innerHTML = contentFn();
+    _tipEl.style.display = 'block';
+    const r = el.getBoundingClientRect();
+    const tw = _tipEl.offsetWidth, vw = document.documentElement.clientWidth;
+    let left = r.left + r.width / 2 - tw / 2;          // 默认以元素中心对齐
+    left = Math.max(8, Math.min(left, vw - tw - 8));   // 夹在视口内
+    _tipEl.style.left = left + 'px';
+    _tipEl.style.top = (r.top - 8) + 'px';
+    _tipEl.classList.add('show');
+  });
+  el.addEventListener('mouseleave', () => {
+    if (_tipEl) { _tipEl.classList.remove('show'); _tipEl.style.display = 'none'; }
+  });
+}
+
 // 把分类树拍平成三级标签列表（含引用），供搜索选择
 function flattenTags(tree) {
   const out = [];

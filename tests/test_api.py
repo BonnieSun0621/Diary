@@ -308,3 +308,16 @@ def test_icon_editable_on_root(client):
     l2 = find_node(tree, "工作")
     l2 = find_node(l2["children"], "项目工作")
     assert client.patch(f"/api/categories/{l2['id']}", json={"icon": "🧩"}).status_code == 400
+
+
+def test_merged_total_dedup(client):
+    """v3.5：重叠活动并集去重——10:00-12:00(120m)+11:00-12:30(90m) 并集=150m；无时段记录另加。"""
+    a = sub_tag(client, "娱乐", "游戏", "重叠A")
+    b = sub_tag(client, "工作", "会议沟通", "重叠B")
+    c = sub_tag(client, "学习成长", "读书", "重叠C")
+    client.post("/api/entries", json={"date": "2026-09-07", "category_id": a, "duration_min": 120, "start_time": "10:00", "end_time": "12:00"})
+    client.post("/api/entries", json={"date": "2026-09-07", "category_id": b, "duration_min": 90, "start_time": "11:00", "end_time": "12:30"})
+    client.post("/api/entries", json={"date": "2026-09-07", "category_id": c, "duration_min": 45})
+    d = client.get("/api/days/2026-09-07").json()
+    assert d["sum_total_min"] == 255
+    assert d["merged_total_min"] == 195

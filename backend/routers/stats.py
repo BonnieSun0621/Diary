@@ -9,6 +9,11 @@ from ..helpers import check_date, load_cats
 router = APIRouter(prefix="/api/stats", tags=["stats"])
 
 
+def hhmm2min(t: str) -> int:
+    h, m = t.split(":")
+    return int(h) * 60 + int(m)
+
+
 def dep_db():
     conn = connect()
     try:
@@ -93,11 +98,37 @@ def _bucket_key(d: str, granularity: str) -> str:
 
 @router.get("/trend")
 def trend(start: str = Query(...), end: str = Query(...),
-          granularity: str = Query("day", pattern="^(day|week|month|year)$"),
+          granularity: str = Query("hour", pattern="^(hour|day|week|month|year)$"),
           conn=Depends(dep_db)):
     """按大类分色的堆叠柱数据。"""
     _range(start, end)
     cats = load_cats(conn)
+    if granularity == "hour":
+        # 小时粒度：仅统计带起止时间的记录，跨午夜段拆到各自小时桶（归属开始日口径不变）
+        rows = conn.execute(
+            "SELECT date, category_id, start_time, end_time FROM entries WHERE date BETWEEN ? AND ? AND start_time IS NOT NULL AND end_time IS NOT NULL",
+            (start, end),
+        ).fetchall()
+        buckets, root_names = {}, {}
+        for r in rows:
+            a, b = hhmm2min(r["start_time"]), hhmm2min(r["end_time"])
+            if b < a:
+                b += 1440
+            day0 = datetime.strptime(r["date"], "%Y-%m-%d").date()
+            root = _root(cats, r["category_id"])
+            for m in range(a, b):
+                cur = day0 + timedelta(minutes=m)
+                key = f"{cur:%m-%d} {m // 60:02d}:00"
+                buckets.setdefault(key, {})
+                buckets[key][root["id"]] = buckets[key].get(root["id"], 0) + 1
+                root_names[root["id"]] = (root["name"], root["color"])
+        labels = sorted(buckets)
+        series = [
+            {"name": root_names[cid][0], "color": root_names[cid][1],
+             "data": [buckets.get(b, {}).get(cid, 0) for b in labels]}
+            for cid in sorted(root_names, key=lambda c: -sum(v.get(c, 0) for v in buckets.values()))
+        ]
+        return {"labels": labels, "series": series}
     rows = conn.execute(
         "SELECT date, category_id, SUM(duration_min) total FROM entries WHERE date BETWEEN ? AND ? GROUP BY date, category_id",
         (start, end),

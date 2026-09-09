@@ -14,7 +14,7 @@ async function exportJournalPng(day) {
     ? seq.map(s => `<span class="j-seg">${esc(s.v)}${s.t ? `<small> ${s.t}</small>` : ''}</span>`).join('<span class="j-arrow">→</span>')
     : '';
   const emo = [chainHtml(page.weather), chainHtml(page.mood)].filter(Boolean).join('&nbsp;&nbsp;');
-  const total = day.entries.reduce((s, e) => s + e.duration_min, 0);
+  const total = day.merged_total_min ?? day.entries.reduce((s, e) => s + e.duration_min, 0);
 
   const esc2 = s => esc(s);
   const listHtml = day.entries.map(e => `
@@ -56,18 +56,39 @@ async function exportJournalPng(day) {
 
   // 迷你饼图（按一级大类聚合）
   if (total) {
+    // 去重：先按大类做分钟级占用掩码，并集得出各大类"独占时间"（重叠段归先开始的大类）
     const byRoot = {};
-    for (const e of day.entries) byRoot[e.path[0]] = (byRoot[e.path[0]] || 0) + e.duration_min;
+    const mask = {};  // root -> Set(分钟)
+    const sorted = [...day.entries].sort((x, y) => (x.start_time || '99:99').localeCompare(y.start_time || '99:99'));
+    for (const e of sorted) {
+      byRoot[e.path[0]] = byRoot[e.path[0]] || 0;
+      if (e.start_time && e.end_time) {
+        const root = e.path[0];
+        mask[root] = mask[root] || new Set();
+        let a = hhmm2min(e.start_time), b = hhmm2min(e.end_time);
+        if (b < a) b += 1440;
+        let own = 0;
+        for (let m = a; m < b; m++) {
+          const k = m % 1440;
+          const taken = Object.values(mask).some(set => set.has(k));
+          if (!taken) { mask[root].add(k); own++; }
+        }
+        byRoot[root] += own;   // 只把未被占用的分钟记入该大类
+      } else {
+        byRoot[e.path[0]] += e.duration_min;   // 无时段记录按时长全记
+      }
+    }
     const colorOf = {};
-    for (const t of App.tags) colorOf[t.path[0]] = t.color;
+    for (const l1 of App.tree) colorOf[l1.name] = l1.color;
     const pie = echarts.init(j.querySelector('#jpie'));
     pie.setOption({
       tooltip: { show: false },
       series: [{ type: 'pie', radius: ['45%', '75%'],
         label: { show: false }, itemStyle: { borderColor: theme === 'light' ? '#f6efe2' : '#2b2823', borderWidth: 2 },
-        data: Object.entries(byRoot).map(([n, v]) => ({ name: n, value: v, itemStyle: { color: colorOf[n] || '#999' } })) }],
+        data: Object.entries(byRoot).filter(([, v]) => v > 0).map(([n, v]) => ({ name: n, value: v, itemStyle: { color: colorOf[n] || '#999' } })) }],
     });
     j.querySelector('#jlegend').innerHTML = Object.entries(byRoot)
+      .filter(([, v]) => v > 0)
       .sort((a, b) => b[1] - a[1])
       .map(([n, v]) => `<span style="color:${colorOf[n] || '#999'}">●</span> ${n} ${fmtDur(v)}（${Math.round(v / total * 100)}%）`)
       .join('<br>');
