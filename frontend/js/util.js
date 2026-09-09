@@ -45,6 +45,30 @@ function toast(msg) {
   clearTimeout(toast._t);
   toast._t = setTimeout(() => el.classList.remove('show'), 2200);
 }
+// 全局统一悬浮提示：固定宽 232px、≤5 行、淡入上浮 150ms（v3.5 引入，供记录行等复用）
+let _tipEl = null;
+function attachTip(el, contentFn) {
+  el.addEventListener('mouseenter', () => {
+    if (!_tipEl) {
+      _tipEl = document.createElement('div');
+      _tipEl.className = 'global-tip';
+      document.body.append(_tipEl);
+    }
+    _tipEl.innerHTML = contentFn();
+    _tipEl.style.display = 'block';
+    const r = el.getBoundingClientRect();
+    const tw = _tipEl.offsetWidth, vw = document.documentElement.clientWidth;
+    let left = r.left + r.width / 2 - tw / 2;
+    left = Math.max(8, Math.min(left, vw - tw - 8));
+    _tipEl.style.left = left + 'px';
+    _tipEl.style.top = (r.top - 8) + 'px';
+    _tipEl.classList.add('show');
+  });
+  el.addEventListener('mouseleave', () => {
+    if (_tipEl) { _tipEl.classList.remove('show'); _tipEl.style.display = 'none'; }
+  });
+}
+
 // 把分类树拍平成三级标签列表（含引用），供搜索选择
 function flattenTags(tree) {
   const out = [];
