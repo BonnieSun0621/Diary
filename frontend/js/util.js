@@ -8,6 +8,14 @@ function addDays(dateStr, n) {
   const t = new Date(y, m - 1, d + n);
   return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
 }
+// 主题令牌读取器：供 ECharts 等非 DOM 渲染处使用
+function themeTokens() {
+  const cs = getComputedStyle(document.documentElement);
+  const v = name => cs.getPropertyValue(name).trim();
+  return { dim: v('--chart-text'), grid: v('--chart-grid'), border: v('--chart-border'),
+           tipBg: v('--tip-bg'), accent: v('--accent'),
+           sunLabel: v('--sun-label'), heatFrom: v('--heat-from') };
+}
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 function dateLabel(s) {
   const [y, m, d] = s.split('-').map(Number);

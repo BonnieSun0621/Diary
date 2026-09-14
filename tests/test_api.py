@@ -261,3 +261,25 @@ def test_stats_strip_emoji(client):
     assert any(n == "娱乐" for n in names), names       # 无 emoji 前缀
     tr = client.get("/api/stats/trend?start=2026-09-08&end=2026-09-08&granularity=day").json()
     assert tr["series"] and tr["series"][0]["name"] == "娱乐", tr["series"]   # 纯文字，无 emoji
+
+
+def test_overnight_split(client):
+    """v4.0：22:00+3h 跨夜 → 当日 22:00-24:00(2h)，次日清单出现 00:00-01:00 延续段(1h)。"""
+    a = sub_tag(client, "娱乐", "游戏", "跨夜A")
+    client.post("/api/entries", json={"date": "2026-09-10", "category_id": a, "duration_min": 180,
+                                      "start_time": "22:00", "end_time": "01:00"})
+    e = client.get("/api/days/2026-09-10").json()["entries"][0]
+    assert e["has_next_day"] and e["split_end"] == "24:00" and e["split_duration"] == 120
+    d10 = client.get("/api/days/2026-09-10").json()
+    assert d10["merged_total_min"] == 120          # 当日只算 22:00-24:00
+    d11 = client.get("/api/days/2026-09-11").json()
+    carried = d11["carried_entries"]
+    assert len(carried) == 1 and carried[0]["split_duration"] == 60
+    assert carried[0]["orig_date"] == "2026-09-10"
+    assert d11["carried_total_min"] == 60
+    # 次日新增活动与延续段不冲突（并集只算本日本条）
+    b = sub_tag(client, "工作", "文书汇报", "跨夜B")
+    client.post("/api/entries", json={"date": "2026-09-11", "category_id": b, "duration_min": 30,
+                                       "start_time": "00:30", "end_time": "01:00"})
+    d11b = client.get("/api/days/2026-09-11").json()
+    assert d11b["merged_total_min"] == 30

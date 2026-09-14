@@ -26,6 +26,11 @@
   --chart-text: #a5a29a;      /* JS 图表读取用（getComputedStyle） */
   --chart-grid: rgba(255,255,255,.07);
   --chart-border: #141519;
+  --track-bg: rgba(0,0,0,.28);      /* 时间轴凹槽 */
+  --shadow-pop: 0 18px 40px rgba(0,0,0,.5);
+  --shadow-pop-lg: 0 24px 60px rgba(0,0,0,.55);
+  --sun-label: #17181c;
+  --heat-from: #232830;
 }
 [data-theme="inkpaper"] {     /* 墨绿纸：深绿底 + 米白字 */
   --bg: #16211d;
@@ -47,6 +52,11 @@
   --tip-bg: #1c2823;
   --shadow-1: 0 1px 2px rgba(0,0,0,.25), 0 4px 14px rgba(0,0,0,.16);
   --shadow-2: 0 2px 6px rgba(0,0,0,.28), 0 14px 34px rgba(0,0,0,.25);
+  --track-bg: rgba(0,0,0,.24);
+  --shadow-pop: 0 18px 40px rgba(0,0,0,.45);
+  --shadow-pop-lg: 0 24px 60px rgba(0,0,0,.5);
+  --sun-label: #16211d;
+  --heat-from: #22322c;
   --chart-text: #a8b3a5;
   --chart-grid: rgba(240,244,235,.08);
   --chart-border: #16211d;
@@ -72,9 +82,45 @@
   --tip-bg: #fffdf7;
   --shadow-1: 0 1px 2px rgba(74,66,56,.12), 0 4px 14px rgba(74,66,56,.10);
   --shadow-2: 0 2px 6px rgba(74,66,56,.16), 0 14px 34px rgba(74,66,56,.14);
+  --track-bg: rgba(74,66,56,.10);          /* 浅色轨道 */
+  --shadow-pop: 0 18px 40px rgba(74,66,56,.18);
+  --shadow-pop-lg: 0 24px 60px rgba(74,66,56,.20);
+  --sun-label: #f6efe2;
+  --heat-from: #eee4d0;
   --chart-text: #8a7f70;
   --chart-grid: rgba(74,66,56,.10);
   --chart-border: #f6efe2;
+}
+
+[data-theme="sky"] {          /* 天青：冷白微蓝 + 深蓝灰字 */
+  --bg: #eef3f6;
+  --bg-tint-1: #f7fafc;
+  --bg-tint-2: #e2ebf2;
+  --surface-1: rgba(46, 58, 69, .05);
+  --surface-2: rgba(46, 58, 69, .03);
+  --surface-hover: rgba(46, 58, 69, .085);
+  --stroke: rgba(46, 58, 69, .14);
+  --stroke-bright: rgba(255,255,255,.95);
+  --text: #2e3a45;
+  --text-2: #6b7a86;
+  --text-3: #93a1ac;
+  --accent: #5a8ea6;
+  --accent-hover: #6da0b8;
+  --accent-deep: #4a7a90;
+  --accent-soft: rgba(90, 142, 166, .15);
+  --accent-ring: rgba(90, 142, 166, .40);
+  --danger: #b05a5a;
+  --tip-bg: #ffffff;
+  --shadow-1: 0 1px 2px rgba(46,58,69,.10), 0 4px 14px rgba(46,58,69,.08);
+  --shadow-2: 0 2px 6px rgba(46,58,69,.14), 0 14px 34px rgba(46,58,69,.12);
+  --track-bg: rgba(46,58,69,.09);
+  --shadow-pop: 0 18px 40px rgba(46,58,69,.16);
+  --shadow-pop-lg: 0 24px 60px rgba(46,58,69,.18);
+  --sun-label: #ffffff;
+  --heat-from: #e0ebf2;
+  --chart-text: #6b7a86;
+  --chart-grid: rgba(46,58,69,.10);
+  --chart-border: #eef3f6;
 }
 
 /* 深色底 + 玻璃质感 + 莫兰迪色板
@@ -89,7 +135,7 @@
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { color-scheme: dark; }
-html[data-theme="warmpaper"] { color-scheme: light; }
+html[data-theme="warmpaper"], html[data-theme="sky"] { color-scheme: light; }
 body {
   font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
   background: radial-gradient(1100px 760px at 82% -12%, var(--bg-tint-1) 0%, var(--bg) 52%),
@@ -179,7 +225,7 @@ h2 {
 .btn:disabled { opacity: .35; cursor: default; }
 .btn:disabled:hover { background: var(--surface-hover); }
 input[type=text], input[type=number], input[type=search], textarea, select, input[type=date] {
-  background: rgba(0,0,0,.28); border: 1px solid var(--stroke); border-radius: var(--r-sm);
+  background: var(--track-bg); border: 1px solid var(--stroke); border-radius: var(--r-sm);
   padding: 8px 12px; outline: none; font-size: 14px; transition: border-color .12s;
 }
 input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-ring); }
@@ -209,6 +255,12 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
 .mini:hover { opacity: 1; }
 .mini:active { transform: scale(.92); }
 
+.next-tag {
+  display: inline-block; padding: 0 6px; border-radius: 6px; font-size: 11px;
+  background: var(--accent-soft); color: var(--accent); margin-left: 2px;
+}
+.entry.carried { opacity: .85; }
+
 /* ---------- 标签选择器 ---------- */
 /* 关键：玻璃卡片用了 backdrop-filter 会产生独立合成层，下拉弹出层必须挂在
    更高的层叠上下文里才能盖住"下面一张卡片"——
@@ -220,7 +272,7 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
 .picker-pop {
   position: absolute; top: 42px; left: 0; right: 0; max-height: 300px; overflow-y: auto; z-index: 60;
   background: var(--tip-bg); border: 1px solid var(--stroke-bright); border-radius: 12px; padding: 6px;
-  box-shadow: 0 18px 40px rgba(0,0,0,.5);
+  box-shadow: var(--shadow-pop);
 }
 .picker-pop .grp { font-size: 11px; color: var(--text-2); padding: 6px 10px 2px; }
 .picker-pop .opt { padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 14px; display: flex; gap: 8px; }
@@ -379,7 +431,7 @@ textarea { width: 100%; resize: vertical; min-height: 90px; line-height: 1.7; }
 .state-pop {
   background: var(--tip-bg); border: 1px solid var(--stroke); border-radius: 14px;
   padding: 18px 20px; min-width: 340px; max-width: 560px;
-  box-shadow: 0 24px 60px rgba(0,0,0,.55);
+  box-shadow: var(--shadow-pop-lg);
   max-height: 68vh; overflow-y: auto;
 }
 .state-pop h3 { font-size: 14px; color: var(--text-2); margin-bottom: 12px; font-weight: 600; }

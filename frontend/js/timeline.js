@@ -1,6 +1,6 @@
 // 每日时间轴：0:00–24:00 色块分带；仅含有起止时间的记录；空隙留白（口径②）；
 // 跨午夜（end<start）拆两段绘制（口径③已保证归属开始日）。
-function renderTimeline(entries) {
+function renderTimeline(entries, carriedEntries) {
   const box = document.createElement('div');
   box.className = 'timeline';
   const track = document.createElement('div');
@@ -9,7 +9,9 @@ function renderTimeline(entries) {
   const base = document.createElement('div');
   base.className = 'baseline';
   box.append(base);
-  const timed = entries.filter(e => e.start_time && e.end_time);
+  const timed = entries.filter(e => e.start_time && e.end_time)
+    .map(e => e.carried_over ? { ...e, start_time: e.split_start || '00:00', end_time: e.split_end || e.end_time } : e)
+    .concat((carriedEntries || []).map(e => ({ ...e, start_time: e.split_start || '00:00', end_time: e.split_end })));
   for (const e of timed) {
     const s = hhmm2min(e.start_time), e2 = hhmm2min(e.end_time);
     const spans = e2 >= s ? [[s, e2]] : [[s, 1440], [0, e2]];

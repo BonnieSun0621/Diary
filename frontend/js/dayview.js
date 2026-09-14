@@ -115,20 +115,34 @@ async function renderDayView(root, dateStr) {
   const list = document.createElement('div');
   list.className = 'card';
   const total = day.merged_total_min ?? day.entries.reduce((s, e) => s + e.duration_min, 0);
-  list.innerHTML = `<h2>活动记录 · 时长 ${fmtDur(total)}</h2>`;
-  list.append(renderTimeline(day.entries));
+  const carriedMin = day.carried_total_min || 0;
+  list.innerHTML = `<h2>活动记录 · 时长 ${fmtDur(total)}${carriedMin ? ` <span class="dim">另有延续自昨日 ${fmtDur(carriedMin)}</span>` : ''}</h2>`;
+  list.append(renderTimeline(day.entries, day.carried_entries));
   const ul = document.createElement('div');
   list.append(ul);
   root.append(list);
+  for (const e of day.carried_entries || []) {   // 昨日延续到今天的段（先列）
+    const row = document.createElement('div');
+    row.className = 'entry carried';
+    const span = `${e.split_start}–${e.split_end}`;
+    row.innerHTML = `
+      <span class="dot" style="background:${e.color}"></span>
+      <div class="path"><span class="dim">${span} · 延续自 ${e.orig_date}</span><br>${e.path.join(' › ')}
+        ${e.note ? `<div class="note">${esc(e.note)}</div>` : ''}</div>
+      <div class="dur">${fmtDur(e.split_duration)}</div>`;
+    ul.append(row);
+  }
   for (const e of day.entries) {
     const row = document.createElement('div');
     row.className = 'entry';
-    const time = e.start_time && e.end_time ? `<span class="dim">${e.start_time}–${e.end_time}</span> ` : '';
+    const st = e.has_next_day ? '24:00' : e.end_time;
+    const dur = e.has_next_day ? e.split_duration : e.duration_min;
+    const time = e.start_time && e.end_time ? `<span class="dim">${e.start_time}–${st}${e.has_next_day ? ' <span class="next-tag">→次日</span>' : ''}</span> ` : '';
     row.innerHTML = `
       <span class="dot" style="background:${e.color}"></span>
       <div class="path">${time}${e.path.join(' › ')}
         ${e.note ? `<div class="note">${esc(e.note)}</div>` : ''}</div>
-      <div class="dur">${fmtDur(e.duration_min)}</div>
+      <div class="dur">${fmtDur(dur)}</div>
       <div class="acts">
         <button class="mini" title="编辑">✏️</button>
         <button class="mini" title="删除">🗑</button>

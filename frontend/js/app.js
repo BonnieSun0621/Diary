@@ -42,6 +42,7 @@ const THEMES = [
   { id: 'dark',      name: '深色',   dot: '#141519' },
   { id: 'inkpaper',  name: '墨绿纸', dot: '#1b2a24' },
   { id: 'warmpaper', name: '暖米纸', dot: '#f6efe2' },
+  { id: 'sky',       name: '天青',   dot: '#5a8ea6' },
 ];
 function applyTheme(id) {
   document.documentElement.dataset.theme = id;

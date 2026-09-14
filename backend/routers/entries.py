@@ -6,6 +6,12 @@ def hhmm2min(t: str) -> int:
     h, m = t.split(":")
     return int(h) * 60 + int(m)
 
+
+def add_days_iso(date: str, n: int) -> str:
+    from datetime import date as _d, timedelta as _td
+    y, m, dd = map(int, date.split("-"))
+    return (_d(y, m, dd) + _td(days=n)).isoformat()
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..database import connect
@@ -45,6 +51,38 @@ def get_day(date: str, conn=Depends(dep_db)):
         (date,),
     ).fetchall()
     cats = load_cats(conn)
+
+    # v4.0 跨夜拆分：end<=start 的记录拆成 当日 22:00-24:00 段 + 次日 00:00-end 段。
+    # 当日清单：本日记录（跨夜的截到 24:00，标注 has_next_day）+ 昨日跨入段（标注 carried_over）。
+    def split_entry(r):
+        e = entry_out(cats, r)
+        if r["start_time"] and r["end_time"]:
+            a, b = hhmm2min(r["start_time"]), hhmm2min(r["end_time"])
+            if b <= a and b > 0:                         # 真跨夜（end 00:00 视作当日 24:00）
+                e["split_end"] = "24:00"
+                e["split_duration"] = 1440 - a
+                e["has_next_day"] = True
+                e["next_date"] = add_days_iso(r["date"], 1)
+        return e
+
+    def carried_entries(prev_date):
+        """昨日跨入本日的段：00:00–end_time，时长取该段。"""
+        out = []
+        for r in conn.execute(
+            "SELECT * FROM entries WHERE date=? AND start_time IS NOT NULL AND end_time IS NOT NULL",
+            (prev_date,),
+        ).fetchall():
+            a, b = hhmm2min(r["start_time"]), hhmm2min(r["end_time"])
+            if b <= a and b > 0:                          # 确认真跨夜
+                e = entry_out(cats, r)
+                e["carried_over"] = True
+                e["orig_date"] = r["date"]
+                e["split_start"] = "00:00"
+                e["split_end"] = r["end_time"]
+                e["split_duration"] = b
+                out.append(e)
+        return out
+
     if page:
         day_page = {
             "date": date, "text": page["text"],
@@ -54,29 +92,36 @@ def get_day(date: str, conn=Depends(dep_db)):
     else:
         day_page = {"date": date, "text": None, "mood": [], "weather": []}
     # v3.5：时长改为"区间并集"——重叠活动的重合部分只计一次；无起止时间的记录按时长单独累加
-    intervals = sorted(
-        (hhmm2min(r["start_time"]), hhmm2min(r["end_time"]))
-        for r in rows if r["start_time"] and r["end_time"]
-    )
+    # 本日区间并集：跨夜段只计到 24:00（其余归次日）
+    intervals = []
+    un_timed = 0
+    for r in rows:
+        if r["start_time"] and r["end_time"]:
+            a, b = hhmm2min(r["start_time"]), hhmm2min(r["end_time"])
+            intervals.append((a, b if b > a else 1440))
+        else:
+            un_timed += r["duration_min"]
     merged, cur = 0, None
-    for a, b in intervals:
-        b = b if b > a else b + 1440          # 跨午夜段
+    for a, b in sorted(intervals):
         if cur is None:
             cur = [a, b]
-        elif a <= cur[1]:                      # 重合/相邻：并入
+        elif a <= cur[1]:
             cur[1] = max(cur[1], b)
         else:
             merged += cur[1] - cur[0]
             cur = [a, b]
     if cur:
         merged += cur[1] - cur[0]
-    un_timed = sum(r["duration_min"] for r in rows if not (r["start_time"] and r["end_time"]))
+    carried = carried_entries(add_days_iso(date, -1))
+    carried_min = sum(e["split_duration"] for e in carried)
     return {
         "date": date,
         "day_page": day_page,
-        "merged_total_min": merged + un_timed,   # 去重后的实际投入时长
-        "sum_total_min": sum(r["duration_min"] for r in rows),  # 旧口径（累加）留作参考
-        "entries": [entry_out(cats, r) for r in rows],
+        "merged_total_min": merged + un_timed,          # 本日实际投入（昨日跨入段不计入本日标题，另列）
+        "carried_total_min": carried_min,               # 昨日延续到本日的时长（另列展示）
+        "sum_total_min": sum(r["duration_min"] for r in rows),
+        "entries": [split_entry(r) for r in rows],
+        "carried_entries": carried,
     }
 
 

@@ -11,10 +11,18 @@ function glassGrad(color) {
     { offset: 1,   color: hexA(color, .58) },
   ]);
 }
-const CHART_T = {
-  dim: '#a5a29a', grid: 'rgba(255,255,255,.07)', tipBg: '#1e2026',
-  accent: '#A3B899', heatFrom: '#232830', border: '#141519',
-};
+// 图表取色全部跟随主题（themeTokens 读 CSS 变量）
+function chartTheme() {
+  const tk = themeTokens();
+  const dark = document.documentElement.dataset.theme !== 'warmpaper';
+  return {
+    dim: tk.dim, grid: tk.grid, tipBg: tk.tipBg, accent: tk.accent, border: tk.border,
+    heatFrom: tk.heatFrom || (dark ? '#232830' : '#e7dcc4'),
+    sunLabel: tk.sunLabel || (dark ? '#17181c' : '#f6efe2'),
+    tooltipText: dark ? '#eceae7' : '#4a4238',
+  };
+}
+let CHART_T = chartTheme();
 const RANGE_PRESETS = {
   '本月': () => [todayStr().slice(0, 7) + '-01', todayStr()],
   '近30天': () => [addDays(todayStr(), -29), todayStr()],
@@ -43,22 +51,23 @@ async function renderStats(root) {
   const heat = echarts.init(heatCard.querySelector('.chart'));
 
   const paint = async () => {
+    CHART_T = chartTheme();   /* 切主题后重渲染取新色 */
     const [s, e] = range;
     ctrl.querySelector('#s').value = s;
     ctrl.querySelector('#e').value = e;
     const sunData = await api.get(`/api/stats/sunburst?start=${s}&end=${e}`);
     sun.setOption({
       tooltip: { backgroundColor: CHART_T.tipBg, borderColor: 'rgba(255,255,255,.1)',
-        textStyle: { color: '#eceae7' }, formatter: p => `${p.name}<br/><b>${fmtDur(p.value)}</b>` },
+        textStyle: { color: CHART_T.tooltipText }, formatter: p => `${p.name}<br/><b>${fmtDur(p.value)}</b>` },
       series: [{ type: 'sunburst', radius: ['12%', '92%'], data: sunData.data,
-        label: { minAngle: 8, color: '#17181c', fontSize: 12 },
+        label: { minAngle: 8, color: CHART_T.sunLabel, fontSize: 12 },
         itemStyle: { borderColor: CHART_T.border, borderWidth: 1.5 },
         emphasis: { itemStyle: { shadowBlur: 12, shadowColor: 'rgba(0,0,0,.4)' } } }],
     }, true);
     const tr = await api.get(`/api/stats/trend?start=${s}&end=${e}&granularity=${gran}`);
     trend.setOption({
       tooltip: { trigger: 'axis', backgroundColor: CHART_T.tipBg, borderColor: 'rgba(255,255,255,.1)',
-        textStyle: { color: '#eceae7' },
+        textStyle: { color: CHART_T.tooltipText },
         valueFormatter: v => fmtDur(v) + '（' + (v / 60).toFixed(1) + 'h）' },
       legend: { textStyle: { color: CHART_T.dim }, top: 0, icon: 'circle', itemWidth: 8 },
       grid: { left: 48, right: 16, top: 36, bottom: 28 },
@@ -75,7 +84,7 @@ async function renderStats(root) {
     const hm = await api.get('/api/stats/heatmap?year=' + y);
     heat.setOption({
       tooltip: { backgroundColor: CHART_T.tipBg, borderColor: 'rgba(255,255,255,.1)',
-        textStyle: { color: '#eceae7' }, formatter: p => `${p.value[0]}<br/><b>${fmtDur(p.value[1])}</b>` },
+        textStyle: { color: CHART_T.tooltipText }, formatter: p => `${p.value[0]}<br/><b>${fmtDur(p.value[1])}</b>` },
       visualMap: { min: 0, max: Math.max(240, ...hm.days.map(d => d.total_min)), orient: 'horizontal', left: 10, bottom: 0,
         inRange: { color: [CHART_T.heatFrom, CHART_T.accent] }, textStyle: { color: CHART_T.dim } },
       calendar: { top: 40, left: 40, right: 20, bottom: 40, range: y, cellSize: ['auto', 16],
