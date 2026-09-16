@@ -1,5 +1,5 @@
 // 每日时间轴：0:00–24:00 色块分带；仅含有起止时间的记录；空隙留白（口径②）；
-// 跨午夜（end<start）拆两段绘制（口径③已保证归属开始日）。
+// 跨夜记录（end<=start 且 end>0）本日不画、延伸段(00:00–end)只画在次日（v4.1 确认口径）。
 function renderTimeline(entries, carriedEntries) {
   const box = document.createElement('div');
   box.className = 'timeline';
@@ -11,6 +11,7 @@ function renderTimeline(entries, carriedEntries) {
   box.append(base);
   const timed = entries.filter(e => e.start_time && e.end_time)
     .map(e => e.carried_over ? { ...e, start_time: e.split_start || '00:00', end_time: e.split_end || e.end_time } : e)
+    .filter(e => !e.has_next_day)                            // 跨夜记录：本日轨道不画，归次日
     .concat((carriedEntries || []).map(e => ({ ...e, start_time: e.split_start || '00:00', end_time: e.split_end })));
   for (const e of timed) {
     const s = hhmm2min(e.start_time), e2 = hhmm2min(e.end_time);
