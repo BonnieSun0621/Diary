@@ -17,30 +17,46 @@ async function exportJournalPng(day) {
   const total = day.merged_total_min ?? day.entries.reduce((s, e) => s + e.duration_min, 0);
 
   const esc2 = s => esc(s);
-  const listHtml = day.entries.map(e => `
+  const carried = day.carried_entries || [];
+  const ownListHtml = day.entries.map(e => {
+    const time = e.start_time && e.end_time
+      ? ` <span style="opacity:.6">${e.start_time}–${e.has_next_day ? '24:00 →次日' : e.end_time}</span>` : '';
+    const dur = e.has_next_day ? e.split_duration : e.duration_min;
+    return `
     <div class="j-entry">
       <span class="j-dot" style="background:${e.color}"></span>
-      <div>${e.path.join(' › ')}${e.start_time && e.end_time ? ` <span style="opacity:.6">${e.start_time}–${e.end_time}</span>` : ''}
+      <div>${e.path.join(' › ')}${time}
         ${e.note ? `<span class="j-note">“${esc2(e.note)}”</span>` : ''}</div>
-      <span class="j-dur">${fmtDur(e.duration_min)}</span>
-    </div>`).join('') || '<div style="opacity:.6">这一天没有记录</div>';
-
-  const timed = day.entries.filter(e => e.start_time && e.end_time);
-  const tlHtml = timed.map(e => {
-    const s = hhmm2min(e.start_time), en = hhmm2min(e.end_time);
-    const spans = en >= s ? [[s, en]] : [[s, 1440], [0, en]];
-    return spans.map(([a, b]) =>
-      `<span class="blk" style="left:${a / 1440 * 100}%;width:${(b - a) / 1440 * 100}%;background:${e.color}"></span>`).join('');
+      <span class="j-dur">${fmtDur(dur)}</span>
+    </div>`;
   }).join('');
+  const carriedListHtml = carried.map(e => `
+    <div class="j-entry">
+      <span class="j-dot" style="background:${e.color}"></span>
+      <div>${e.path.join(' › ')} <span style="opacity:.6">${e.split_start}–${e.split_end} · 延续自 ${e.orig_date}</span></div>
+      <span class="j-dur">${fmtDur(e.split_duration)}</span>
+    </div>`).join('');
+  const listHtml = (carriedListHtml + ownListHtml) || '<div style="opacity:.6">这一天没有记录</div>';
+
+  // 时间轴：跨夜记录开始日只画 start–24:00（0–end 由次日长图的延续段绘制）
+  const timed = day.entries.filter(e => e.start_time && e.end_time);
+  const tlBlocks = [];
+  for (const e of timed) {
+    const s = hhmm2min(e.start_time), en = hhmm2min(e.end_time);
+    (en >= s ? [[s, en]] : [[s, 1440]]).forEach(([a, b]) => tlBlocks.push([a, b, e.color]));
+  }
+  for (const e of carried) tlBlocks.push([0, hhmm2min(e.split_end), e.color]);
+  const tlHtml = tlBlocks.map(([a, b, c]) =>
+    `<span class="blk" style="left:${a / 1440 * 100}%;width:${(b - a) / 1440 * 100}%;background:${c}"></span>`).join('');
 
   j.innerHTML = `
     <div class="row" style="justify-content:space-between">
       <div class="j-date">${day.date.replaceAll('-', ' · ')}</div>
       <div class="j-emo">${emo}</div>
     </div>
-    <div class="dim" style="opacity:.7">共记录 ${day.entries.length} 项 · ${fmtDur(total)}</div>
+    <div class="dim" style="opacity:.7">共记录 ${day.entries.length} 项 · ${fmtDur(total)}${carried.length ? ` · 另有延续 ${carried.length} 项 ${fmtDur(carried.reduce((s, e) => s + e.split_duration, 0))}` : ''}</div>
     <hr class="j-hr">
-    ${timed.length ? `<div class="j-sec">时 间 轴</div><div class="j-tl">${tlHtml}</div>
+    ${tlBlocks.length ? `<div class="j-sec">时 间 轴</div><div class="j-tl">${tlHtml}</div>
       <div style="display:flex;justify-content:space-between;font-size:11px;opacity:.6;margin-top:2px"><span>0:00</span><span>12:00</span><span>24:00</span></div>` : ''}
     <div class="j-sec">今 日 行 迹</div>
     ${listHtml}
