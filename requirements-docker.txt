@@ -1,0 +1,3 @@
+# Docker 运行时依赖（与原生 .venv 的 fastapi/uvicorn 版本一致；不装 pyinstaller/pytest，镜像更小）
+fastapi==0.141.1
+uvicorn[standard]==0.52.4

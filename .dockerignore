@@ -1,0 +1,15 @@
+# 构建上下文只保留 backend/ frontend/ —— 严禁把任何数据库/旧数据烤进镜像
+.git
+.venv
+**/__pycache__
+*.pyc
+data/
+dist/
+build/
+tests/
+*.spec
+*.md
+.server.pid
+.DS_Store
+.DS_Store?
+._*

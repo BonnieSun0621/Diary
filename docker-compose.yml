@@ -1,0 +1,15 @@
+# 拾光日记 · Docker Compose
+# 数据：直接挂载宿主机 ~/Library/Application Support/Diary（与原生模式共用同一个 diary.db，零迁移）
+# 端口：与原生 start.sh 相同的 8730 —— 两种方式不可同时运行
+services:
+  diary:
+    build: .
+    image: diary:latest
+    container_name: diary
+    ports:
+      - "8730:8730"
+    environment:
+      DIARY_DATA_DIR: /data
+    volumes:
+      - "${HOME}/Library/Application Support/Diary:/data"
+    restart: unless-stopped   # Docker Desktop 随登录启动时，等效开机自启
